@@ -88,9 +88,21 @@ services:
     depends_on:
       - backend
     ports:
-      - "5173:5173"
+      - "5173:80"
       - "80:80"
 
+  # Optional local LanguageTool grammar engine (activate with --profile with-languagetool)
+  languagetool:
+    image: eriksoe/languagetool:latest
+    container_name: mock_interview_languagetool
+    restart: unless-stopped
+    ports:
+      - "8010:8010"
+    environment:
+      - Java_Xms=512m
+      - Java_Xmx=1g
+    profiles:
+      - with-languagetool
 
 volumes:
   postgres_data:

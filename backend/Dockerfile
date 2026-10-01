@@ -27,7 +27,8 @@ RUN mkdir -p /app/storage/resumes \
              /app/storage/recordings \
              /app/storage/reports \
              /app/storage/posters \
-             /app/storage/avatars
+             /app/storage/avatars \
+             /app/storage/backups
 
 EXPOSE 8000
 
