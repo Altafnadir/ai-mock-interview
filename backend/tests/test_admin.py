@@ -228,3 +228,35 @@ def test_admin_monitoring_and_security(admin_headers):
     bks_res = client.get("/api/v1/admin/backups", headers=admin_headers)
     assert bks_res.status_code == 200
     assert len(bks_res.json()) >= 1
+    new_bk_id = bk_res.json()["id"]
+
+    # Test Restore Endpoint using freshly created backup
+    restore_res = client.post(f"/api/v1/admin/restore/{new_bk_id}", headers=admin_headers)
+    assert restore_res.status_code == 200
+    assert "restored" in restore_res.json()["message"].lower()
+
+def test_admin_upload_set_csv(admin_headers):
+    csv_content = """text,role,category,difficulty,keywords,sample_answer
+"Explain how database connection pooling operates.","Backend Developer","Technical","Intermediate","connections;pool;thread;latency","Connection pooling maintains active DB connections for reuse."
+"""
+    files = {"file": ("test_set.csv", csv_content.encode("utf-8"), "text/csv")}
+    res = client.post("/api/v1/admin/questions/upload-set", files=files, headers=admin_headers)
+    assert res.status_code == 200
+    assert res.json()["count"] >= 1
+
+def test_admin_maintenance_mode(admin_headers):
+    # Enable maintenance
+    put_res = client.put("/api/v1/admin/settings/maintenance", json={"maintenance_mode": True, "message": "Scheduled upgrades"}, headers=admin_headers)
+    assert put_res.status_code == 200
+    assert put_res.json()["maintenance_mode"] is True
+
+    # Check maintenance
+    get_res = client.get("/api/v1/admin/settings/maintenance", headers=admin_headers)
+    assert get_res.status_code == 200
+    assert get_res.json()["maintenance_mode"] is True
+
+    # Disable maintenance
+    reset_res = client.put("/api/v1/admin/settings/maintenance", json={"maintenance_mode": False}, headers=admin_headers)
+    assert reset_res.status_code == 200
+    assert reset_res.json()["maintenance_mode"] is False
+

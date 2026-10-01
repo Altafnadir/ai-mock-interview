@@ -354,6 +354,7 @@ def delete_question(question_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/questions/bulk-upload")
+@router.post("/questions/upload-set")
 async def bulk_upload_questions(file: UploadFile = File(...), db: Session = Depends(get_db)):
     contents = await file.read()
     filename = file.filename.lower()
@@ -892,6 +893,13 @@ def update_security_settings(payload: admin_schemas.SecuritySettingsUpdate, db: 
     return {"message": "Security settings saved", "settings": payload.model_dump()}
 
 
+def _get_active_db_file() -> str:
+    for path in ["mock_interview.db", "../mock_interview.db"]:
+        if os.path.exists(path) and os.path.getsize(path) > 1024:
+            return os.path.abspath(path)
+    return os.path.abspath("mock_interview.db")
+
+
 @router.post("/backup", response_model=admin_schemas.BackupResponse)
 def create_backup(db: Session = Depends(get_db)):
     backup_dir = os.path.join(settings.STORAGE_DIR, "backups")
@@ -900,8 +908,7 @@ def create_backup(db: Session = Depends(get_db)):
     backup_filename = f"db_backup_{timestamp}.sqlite"
     backup_filepath = os.path.join(backup_dir, backup_filename)
 
-    # SQLite source DB file
-    db_source = "mock_interview.db"
+    db_source = _get_active_db_file()
     if os.path.exists(db_source):
         shutil.copy2(db_source, backup_filepath)
         size_bytes = os.path.getsize(backup_filepath)
@@ -950,5 +957,36 @@ def restore_backup(backup_id: str):
     if not target_file or not os.path.exists(target_file):
         raise HTTPException(status_code=404, detail="Backup snapshot not found")
 
-    shutil.copy2(target_file, "mock_interview.db")
+    db_dest = _get_active_db_file()
+    shutil.copy2(target_file, db_dest)
     return {"message": "Backup snapshot restored successfully", "backup_id": backup_id}
+
+
+@router.get("/settings/maintenance")
+def get_maintenance_mode(db: Session = Depends(get_db)):
+    setting = db.query(SystemSetting).filter(SystemSetting.key == "maintenance_mode").first()
+    is_maintenance = bool(setting.value.get("enabled", False)) if setting and isinstance(setting.value, dict) else False
+    message = setting.value.get("message", "System maintenance in progress") if setting and isinstance(setting.value, dict) else "System maintenance in progress"
+    return {"maintenance_mode": is_maintenance, "message": message}
+
+
+@router.put("/settings/maintenance")
+def set_maintenance_mode(
+    payload: dict,
+    db: Session = Depends(get_db)
+):
+    """Enable or disable platform-wide maintenance mode."""
+    setting = db.query(SystemSetting).filter(SystemSetting.key == "maintenance_mode").first()
+    enabled = payload.get("maintenance_mode", payload.get("enabled", False))
+    msg = payload.get("message", "System is temporarily undergoing scheduled maintenance.")
+    val = {"enabled": enabled, "message": msg}
+
+    if not setting:
+        setting = SystemSetting(key="maintenance_mode", value=val, description="Platform maintenance mode flag")
+        db.add(setting)
+    else:
+        setting.value = val
+
+    db.commit()
+    return {"message": "Maintenance setting updated", "maintenance_mode": enabled, "details": val}
+
