@@ -118,7 +118,83 @@ def get_resume(
 
     return resume
 
+@router.put("/{resume_id}", response_model=ResumeResponse)
+def replace_resume(
+    resume_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Replace an existing resume with a new PDF/DOCX file and re-run parsing."""
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+    if resume.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    allowed_exts = [".pdf", ".docx"]
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file format: {ext}. Only PDF and DOCX files are supported."
+        )
+
+    # Delete old file
+    storage_service.delete_file(resume.file_path)
+
+    # Save new file
+    stored_path, original_filename = storage_service.save_upload_file(
+        file=file,
+        folder="resumes",
+        allowed_extensions=allowed_exts
+    )
+
+    file_type = "pdf" if ext == ".pdf" else "docx"
+    resume.file_path = stored_path
+    resume.original_filename = original_filename
+    resume.file_type = file_type
+
+    # Re-extract raw text and parse
+    abs_path = storage_service.get_absolute_path(stored_path)
+    raw_text = ""
+    try:
+        raw_text = resume_parser.extract_text(str(abs_path), file_type)
+    except Exception:
+        raw_text = ""
+
+    parsed = resume_parser.parse(raw_text)
+
+    # Determine target role
+    target_role = "Full Stack Developer"
+    candidate_profile = db.query(CandidateProfile).filter(CandidateProfile.user_id == current_user.id).first()
+    if candidate_profile and candidate_profile.preferred_job_roles:
+        target_role = candidate_profile.preferred_job_roles[0]
+
+    gap_data = resume_parser.analyze_skills_gap(parsed.get("extracted_skills", []), target_role)
+
+    analysis = resume.analysis
+    if not analysis:
+        analysis = ResumeAnalysis(resume_id=resume.id)
+        db.add(analysis)
+
+    analysis.extracted_education = parsed.get("extracted_education", [])
+    analysis.extracted_skills = parsed.get("extracted_skills", [])
+    analysis.extracted_projects = parsed.get("extracted_projects", [])
+    analysis.extracted_certifications = parsed.get("extracted_certifications", [])
+    analysis.extracted_experience = parsed.get("extracted_experience", [])
+    analysis.missing_skills = gap_data.get("missing_skills", [])
+    analysis.weak_sections = parsed.get("weak_sections", [])
+    analysis.improvement_suggestions = parsed.get("improvement_suggestions", [])
+    analysis.status = "analyzed"
+    analysis.raw_text = raw_text
+
+    db.commit()
+    db.refresh(resume)
+    return resume
+
 @router.delete("/{resume_id}")
+
 def delete_resume(
     resume_id: str,
     db: Session = Depends(get_db),

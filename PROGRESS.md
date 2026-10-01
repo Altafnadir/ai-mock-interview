@@ -7,7 +7,7 @@
 
 - [x] **Phase 1: Foundation** — Repo, Docker Compose (frontend, backend, ai-worker, postgres), ffmpeg + pinned AI deps, config, models + migrations, seeds, health check.
 - [x] **Phase 2: Auth + Frontend Shell** — Full auth (email/Google/OTP/JWT/reset), layouts, routing, guards, design system, ALL page skeletons.
-- [ ] **Phase 3: Profile + Resume** — Profile APIs/UI, resume upload/replace, parsing + AI analysis UI, verification on >= 10 resumes.
+- [x] **Phase 3: Profile + Resume** — Profile APIs/UI, resume upload/replace, parsing + AI analysis UI, verification on >= 10 resumes.
 - [ ] **Phase 4: Interview Engine** — Meta, question generation + follow-ups, session APIs, interview room (recording, timers, skip/repeat/next/end, autosave, resilient upload).
 - [ ] **Phase 5: AI Modules + Pipeline** — STT, fillers, voice, vision, emotion, grammar, content; job queue + worker + status.
 - [ ] **Phase 6: Scoring, Feedback, Reports** — Scoring engine, feedback, report page, 3 PDFs, sharing, email, notifications.
@@ -36,14 +36,21 @@
   - Axios client with JWT refresh queue and retry interceptor (`client.js`).
   - Frontend verified with clean Vite build (`dist/`).
   - Backend auth test suite passing 6/6 tests.
+- **Phase 3 (Profile + Resume):**
+  - Profile APIs: `GET/PUT /profile` (education, skills, experience, certs, roles), `POST/DELETE /profile/avatar`.
+  - Resume APIs: `POST /resumes` / `/upload`, `GET /resumes`, `GET /resumes/{id}`, `PUT /resumes/{id}` (replace file), `DELETE /resumes/{id}`, `POST /resumes/{id}/analyze` (gap analysis by target job role), `GET /resumes/{id}/analysis`.
+  - Frontend UIs: `ProfilePage.jsx` and `ResumePage.jsx` with drag & drop upload, visual skills gap badges, weak sections, and improvement tips.
+  - Verification test suite: `backend/tests/test_resume_parser_10_samples.py` passing 10/10 diverse resumes across PDF and DOCX formats (Requirement S2 satisfied).
 
 ---
 
 **NEXT STEP:**
-Phase 3: Profile + Resume
-1. Verify Profile APIs: `GET/PUT /profile`, `POST /profile/avatar`.
-2. Verify Resume APIs: `POST /resumes/upload` (PDF/DOCX, <= 5MB, MIME validation), `GET /resumes`, `GET /resumes/{id}`, `PUT /resumes/{id}`, `DELETE /resumes/{id}`, `POST /resumes/{id}/analyze`, `GET /resumes/{id}/analysis`.
-3. Verify candidate Profile and Resume UIs (`ProfilePage.jsx`, `ResumePage.jsx`).
-4. Implement and run S2 verification test suite: `backend/tests/test_resume_parser_10_samples.py` verifying resume parser on >= 10 varied sample resumes (PDF and DOCX).
+Phase 4: Interview Engine
+1. Verify Meta endpoints (`/meta/job-roles`, `/categories`, `/difficulties`).
+2. Verify personalized question generation (`POST /interviews`) mixing resume insights, role, experience level, and difficulty.
+3. Verify dynamic follow-up generation from previous question transcript.
+4. Verify Interview Room state machine (`InterviewRoomPage.jsx`): recording indicator, per-question timers, skip, repeat, next, end, autosave progress, connection lost banner, before-unload warning, camera/mic/lighting test with audio meter.
+5. Verify resilience: client-side offline buffering / retry on reconnect and per-question upload.
+
 
 
