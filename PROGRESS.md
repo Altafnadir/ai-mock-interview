@@ -9,7 +9,7 @@
 - [x] **Phase 2: Auth + Frontend Shell** — Full auth (email/Google/OTP/JWT/reset), layouts, routing, guards, design system, ALL page skeletons.
 - [x] **Phase 3: Profile + Resume** — Profile APIs/UI, resume upload/replace, parsing + AI analysis UI, verification on >= 10 resumes.
 - [x] **Phase 4: Interview Engine** — Meta, question generation + follow-ups, session APIs, interview room (recording, timers, skip/repeat/next/end, autosave, resilient upload).
-- [ ] **Phase 5: AI Modules + Pipeline** — STT, fillers, voice, vision, emotion, grammar, content; job queue + worker + status.
+- [x] **Phase 5: AI Modules + Pipeline** — STT, fillers, voice, vision, emotion, grammar, content; job queue + worker + status.
 - [ ] **Phase 6: Scoring, Feedback, Reports** — Scoring engine, feedback, report page, 3 PDFs, sharing, email, notifications.
 - [ ] **Phase 7: Dashboard + Recommendations** — Dashboard, trends, compare, recommender + YouTube resources, practice recommendations.
 - [ ] **Phase 8: Admin Panel** — All admin APIs + UIs, monitoring, backup/restore, maintenance mode.
@@ -49,15 +49,23 @@
   - Interview room frontend: live webcam preview, recording indicator, timers with auto-advance, text-to-speech for questions, offline network indicator banner, `beforeunload` leave protection.
   - Background job registered in `processing_jobs` when interview ends.
   - Interview test suite passing 3/3 tests.
+- **Phase 5 (AI Modules + Pipeline):**
+  - AI Plugin Registry implemented in `backend/app/ai/registry.py` with `BaseAIPlugin` ABC, dynamic plugin registration, and safe execution.
+  - Core modules integrated into registry: Speech-to-Text (`stt`), Filler Words (`filler_detector`), Voice DSP (`voice_analyzer`), Vision (`vision_analyzer`), Affective Demeanor (`emotion_analyzer`), Lexical Grammar (`grammar_analyzer`), and STAR Content Evaluation (`content_evaluator`).
+  - Media normalizer utility (`backend/app/ai/media_normalizer.py`) converts candidate audio to 16 kHz mono WAV and video to H.264 MP4 via ffmpeg with safe fallback.
+  - Resilient pipeline execution in `backend/app/workers/pipeline.py` with individual module try/except isolation, real-time `processing_jobs.step` updates, and composite confidence synthesis (voice + emotion + eye contact + posture + fillers).
+  - Scoring engine upgraded with 7-dimensional weighted matrix (Content 25, Comm 15, Voice 15, Conf 15, Eye 10, Body 10, Grammar 10) and standard verdict bands ("Excellent", "Good", "Needs Improvement", "Needs Significant Practice").
+  - Test suite passing 8/8 tests (`backend/tests/test_ai_pipeline.py`).
 
 ---
 
 **NEXT STEP:**
-Phase 5: AI Modules + Pipeline
-1. Verify all 7 independent AI modules: STT (`stt.py`), Fillers (`filler_detector.py`), Voice DSP (`voice_analyzer.py`), Vision (`vision_analyzer.py`), Emotion (`emotion_analyzer.py`), Grammar (`grammar_analyzer.py`), Content & STAR (`content_evaluator.py`).
-2. Implement AI Plugin Registry in `backend/app/ai/registry.py` (and export from `backend/app/ai/__init__.py`).
-3. Verify ffmpeg media normalization (audio extraction to 16kHz mono WAV, video normalization to H.264 MP4).
-4. Run AI pipeline test suite (`backend/tests/test_ai_pipeline.py`) verifying all stages and fallbacks.
+Phase 6: Scoring, Feedback, Reports
+1. Verify report generation endpoints: `GET /reports/{sid}`, `/pdf`, `/summary-pdf`, `/poster`, `POST /reports/{sid}/share`, `DELETE /reports/share/{id}`, `GET /public/reports/{token}` (no auth), `POST /reports/{sid}/email`.
+2. Enhance `pdf_builder.py` with 1-page condensed AI Summary PDF (`build_summary_pdf`) and Performance Poster PDF (`build_poster_pdf`) alongside full report PDF.
+3. Verify Report frontend UI (`ReportPage.jsx` and `SharedReportPage.jsx`) with all charts, filler-word counters, STAR breakdowns, and download buttons.
+4. Run `backend/tests/test_reports.py`.
+
 
 
 

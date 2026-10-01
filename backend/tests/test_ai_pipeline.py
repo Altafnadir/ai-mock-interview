@@ -11,6 +11,9 @@ from app.db.models.analysis import (
     AnalysisVoice, AnalysisVision, AnalysisEmotion,
     AnalysisGrammar, AnalysisContent
 )
+from app.ai.registry import ai_registry
+from app.ai.media_normalizer import media_normalizer
+from app.ai.scoring_engine import scoring_engine
 from app.ai.filler_detector import filler_detector
 from app.ai.grammar_analyzer import grammar_analyzer
 from app.ai.voice_analyzer import voice_analyzer
@@ -151,3 +154,55 @@ def test_full_ai_analysis_pipeline_integration():
         assert len(content) >= 2, "AnalysisContent records missing for questions"
     finally:
         db.close()
+
+def test_ai_plugin_registry():
+    plugins = ai_registry.list_plugins()
+    assert len(plugins) == 7
+    plugin_names = {p["name"] for p in plugins}
+    assert "stt" in plugin_names
+    assert "filler_detector" in plugin_names
+    assert "voice_analyzer" in plugin_names
+    assert "vision_analyzer" in plugin_names
+    assert "emotion_analyzer" in plugin_names
+    assert "grammar_analyzer" in plugin_names
+    assert "content_evaluator" in plugin_names
+
+    # Test dynamic execution through registry
+    res = ai_registry.execute("filler_detector", transcript="Um, like, basically", duration_seconds=10.0)
+    assert res["total_fillers"] == 3
+
+def test_media_normalizer_graceful():
+    # Normalizer handles missing/null paths safely without crashing
+    norm_audio = media_normalizer.normalize_audio(None)
+    assert norm_audio is None
+
+    norm_video = media_normalizer.normalize_video(None)
+    assert norm_video is None
+
+def test_scoring_engine_and_confidence():
+    # Test composite confidence computation
+    conf = scoring_engine.compute_composite_confidence(
+        voice_stability=85.0,
+        emotion_confidence=82.0,
+        eye_contact_pct=80.0,
+        posture_score=85.0,
+        filler_frequency_wpm=1.5
+    )
+    assert 70.0 <= conf <= 95.0
+
+    # Test calculation with default 7-factor weights
+    scores = scoring_engine.calculate_scores(
+        content_scores=[88.0, 90.0],
+        communication_score=85.0,
+        voice_score=82.0,
+        eye_contact_score=80.0,
+        body_language_score=85.0,
+        confidence_score=conf,
+        grammar_score=90.0
+    )
+    assert scores["overall_score"] >= 80.0
+    assert scores["final_verdict"] in ["Excellent", "Good"]
+    assert scores["weights_used"]["content"] == 25.0
+    assert scores["weights_used"]["voice"] == 15.0
+    assert scores["weights_used"]["grammar"] == 10.0
+
