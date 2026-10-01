@@ -77,3 +77,48 @@ def test_token_refresh():
     assert "access_token" in ref_data
     assert "refresh_token" in ref_data
     assert ref_data["refresh_token"] != refresh_token  # Rotated!
+
+def test_passwordless_otp_login_flow():
+    test_email = "otp_user@gims.edu.pk"
+    
+    # 1. Request OTP
+    req_resp = client.post("/api/v1/auth/otp/request", json={"email": test_email})
+    assert req_resp.status_code == 200
+    assert "one-time login code" in req_resp.json()["message"]
+
+    # 2. Extract code from DB
+    db = SessionLocal()
+    try:
+        otp_entry = db.query(OTPCode).filter(
+            OTPCode.email == test_email,
+            OTPCode.purpose == "login",
+            OTPCode.used == False
+        ).order_by(OTPCode.created_at.desc()).first()
+        assert otp_entry is not None
+
+        # Verify invalid code
+        bad_resp = client.post("/api/v1/auth/otp/verify", json={
+            "email": test_email,
+            "code": "999999"
+        })
+        assert bad_resp.status_code == 400
+    finally:
+        db.close()
+
+def test_forgot_and_reset_password_flow():
+    test_email = "candidate@gims.edu.pk"
+    
+    # 1. Forgot password request
+    fp_resp = client.post("/api/v1/auth/forgot-password", json={"email": test_email})
+    assert fp_resp.status_code == 200
+    assert "dispatched" in fp_resp.json()["message"]
+
+def test_google_auth_flow():
+    # Test Google OAuth token exchange
+    resp = client.post("/api/v1/auth/google", json={"id_token": "mock_google_id_token_test_12345"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+    assert data["user"]["auth_provider"] == "google"
+

@@ -29,12 +29,15 @@ from app.schemas.auth import (
     GoogleLoginRequest,
     OTPVerifyRequest,
     OTPResendRequest,
+    OTPLoginRequest,
+    OTPLoginVerifyRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
     RefreshTokenRequest,
     UserResponse,
     TokenResponse,
     MessageResponse,
+
 )
 from app.services.email import send_otp_email, send_password_reset_email
 
@@ -191,7 +194,100 @@ def resend_otp(payload: OTPResendRequest, db: Session = Depends(get_db)):
         message=f"A fresh verification code has been dispatched to {email}."
     )
 
+@router.post("/otp/request", response_model=MessageResponse)
+def request_otp_login(payload: OTPLoginRequest, db: Session = Depends(get_db)):
+    """Request a one-time passcode for passwordless login"""
+    email = payload.email.lower()
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        # Create unverified user if not existing
+        user = User(
+            full_name=email.split("@")[0].title(),
+            email=email,
+            password_hash=None,
+            role="candidate",
+            is_active=True,
+            is_email_verified=False,
+            auth_provider="otp"
+        )
+        db.add(user)
+        db.flush()
+        db.add(CandidateProfile(user_id=user.id))
+
+    # Invalidate previous login OTPs
+    db.query(OTPCode).filter(OTPCode.email == email, OTPCode.purpose == "login", OTPCode.used == False).update({"used": True})
+
+    otp = generate_numeric_otp(6)
+    db.add(OTPCode(
+        email=email,
+        code_hash=get_password_hash(otp),
+        purpose="login",
+        expires_at=datetime.utcnow() + timedelta(minutes=15),
+        used=False
+    ))
+    db.commit()
+
+    send_otp_email(to_email=email, otp_code=otp, purpose="Passwordless Login")
+
+    return MessageResponse(
+        message=f"A one-time login code has been dispatched to {email}."
+    )
+
+@router.post("/otp/verify", response_model=TokenResponse)
+def verify_otp_login(payload: OTPLoginVerifyRequest, request: Request, db: Session = Depends(get_db)):
+    """Verify passwordless OTP code and issue JWT tokens"""
+    email = payload.email.lower()
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User account not found.")
+
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is deactivated.")
+
+    otp_records = (
+        db.query(OTPCode)
+        .filter(OTPCode.email == email, OTPCode.purpose == "login", OTPCode.used == False)
+        .order_by(OTPCode.created_at.desc())
+        .all()
+    )
+
+    valid_record = None
+    now = datetime.utcnow()
+    for rec in otp_records:
+        if rec.expires_at > now and verify_password(payload.code, rec.code_hash):
+            valid_record = rec
+            break
+
+    if not valid_record:
+        log_login_attempt(db, email, request, success=False)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired login code.")
+
+    valid_record.used = True
+    user.is_email_verified = True
+    user.last_login_at = now
+    db.commit()
+
+    access_token = create_access_token(user.id)
+    refresh_token = create_refresh_token(user.id)
+
+    db.add(RefreshToken(
+        user_id=user.id,
+        token_hash=get_password_hash(refresh_token),
+        expires_at=now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        revoked=False
+    ))
+    db.commit()
+
+    log_login_attempt(db, email, request, success=True)
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user=UserResponse.model_validate(user)
+    )
+
 @router.post("/login", response_model=TokenResponse)
+
 def login(login_in: UserLogin, request: Request, db: Session = Depends(get_db)):
     """Authenticate with email and password, issuing access & refresh tokens"""
     email = login_in.email.lower()

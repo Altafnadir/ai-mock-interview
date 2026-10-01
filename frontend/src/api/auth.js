@@ -5,9 +5,12 @@ export const authApi = {
   verifyOtp: (data) => apiClient.post('/auth/verify-otp', data),
   resendOtp: (data) => apiClient.post('/auth/resend-otp', data),
   login: (data) => apiClient.post('/auth/login', data),
+  requestOtpLogin: (email) => apiClient.post('/auth/otp/request', { email }),
+  verifyOtpLogin: (data) => apiClient.post('/auth/otp/verify', data),
   googleLogin: (id_token) => apiClient.post('/auth/google', { id_token }),
   forgotPassword: (email) => apiClient.post('/auth/forgot-password', { email }),
   resetPassword: (data) => apiClient.post('/auth/reset-password', data),
   getMe: () => apiClient.get('/auth/me'),
   logout: (refreshToken) => apiClient.post('/auth/logout', { refresh_token: refreshToken }),
 };
+

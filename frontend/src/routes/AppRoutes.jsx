@@ -87,6 +87,8 @@ export default function AppRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/resume" element={<ResumePage />} />
+        <Route path="/resumes" element={<ResumePage />} />
+
         <Route path="/interview/setup" element={<InterviewSetupPage />} />
         <Route path="/reports/:sessionId" element={<ReportPage />} />
         <Route path="/history" element={<HistoryPage />} />

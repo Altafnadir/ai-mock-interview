@@ -25,6 +25,14 @@ class OTPResendRequest(BaseModel):
     email: EmailStr
     purpose: str = "register"
 
+class OTPLoginRequest(BaseModel):
+    email: EmailStr
+
+class OTPLoginVerifyRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6)
+
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
