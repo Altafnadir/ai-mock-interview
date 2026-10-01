@@ -103,7 +103,7 @@ def claim_next_job(db: Session) -> str | None:
 
 def run_worker_loop():
     logger.info("=" * 60)
-    logger.info("AI Mock Interview — Background AI Processing Worker Started")
+    logger.info("AI Mock Interview - Background AI Processing Worker Started")
     logger.info(f"Database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else 'local'}")
     logger.info(f"Concurrency: {settings.WORKER_CONCURRENCY} worker threads")
     logger.info("=" * 60)

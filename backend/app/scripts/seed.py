@@ -13,7 +13,7 @@ from app.scripts.seed_demo import seed_demo
 
 def run_all_seeds():
     print("=" * 60)
-    print("AI-Based Mock Interview Preparation System — Master Database Seeder")
+    print("AI-Based Mock Interview Preparation System - Master Database Seeder")
     print("Project ID: GIMS-BSSE-F202206 (PMAS-Arid Agriculture University)")
     print("=" * 60)
 

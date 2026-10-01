@@ -9,15 +9,15 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str = "registration") 
     Sends an OTP email. If SMTP is not configured or in development mode,
     the OTP is logged prominently to the console so registration/verification is frictionless.
     """
-    logger.info(f"🔑 [OTP GENERATED] To: {to_email} | Purpose: {purpose} | Code: [{otp_code}]")
-    print(f"\n==========================================")
-    print(f"📩 [EMAIL OTP NOTIFICATION]")
+    logger.info(f"[OTP GENERATED] To: {to_email} | Purpose: {purpose} | Code: [{otp_code}]")
+    print("\n==========================================")
+    print("[EMAIL OTP NOTIFICATION]")
     print(f"To: {to_email}")
-    print(f"Subject: Your GIMS AI Mock Interview OTP Code")
+    print("Subject: Your GIMS AI Mock Interview OTP Code")
     print(f"Code: {otp_code}")
     print(f"Purpose: {purpose}")
-    print(f"Valid for 15 minutes.")
-    print(f"==========================================\n")
+    print("Valid for 15 minutes.")
+    print("==========================================\n")
 
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
         return True
@@ -55,12 +55,12 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str = "registration") 
 
 def send_password_reset_email(to_email: str, reset_token: str) -> bool:
     reset_link = f"http://localhost:5173/reset-password?token={reset_token}"
-    logger.info(f"🔗 [PASSWORD RESET LINK] To: {to_email} | Link: {reset_link}")
-    print(f"\n==========================================")
-    print(f"📩 [PASSWORD RESET EMAIL]")
+    logger.info(f"[PASSWORD RESET LINK] To: {to_email} | Link: {reset_link}")
+    print("\n==========================================")
+    print("[PASSWORD RESET EMAIL]")
     print(f"To: {to_email}")
     print(f"Reset Link: {reset_link}")
-    print(f"==========================================\n")
+    print("==========================================\n")
     return True
 
 def send_report_email(
@@ -72,15 +72,15 @@ def send_report_email(
     pdf_path: str = ""
 ) -> bool:
     """Sends candidate performance report email with overall score and feedback."""
-    logger.info(f"📊 [REPORT EMAIL] To: {to_email} | Score: {overall_score} | Verdict: {verdict}")
-    print(f"\n==========================================")
-    print(f"📩 [INTERVIEW PERFORMANCE REPORT EMAIL]")
+    logger.info(f"[REPORT EMAIL] To: {to_email} | Score: {overall_score} | Verdict: {verdict}")
+    print("\n==========================================")
+    print("[INTERVIEW PERFORMANCE REPORT EMAIL]")
     print(f"To: {to_email} ({candidate_name})")
     print(f"Session ID: {session_id}")
     print(f"Overall Score: {overall_score}/100")
     print(f"Verdict: {verdict}")
     print(f"PDF Report: {pdf_path}")
-    print(f"==========================================\n")
+    print("==========================================\n")
 
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
         return True

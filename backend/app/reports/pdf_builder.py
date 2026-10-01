@@ -280,7 +280,7 @@ class PDFReportBuilder:
 
         # Header
         header = Table([
-            [Paragraph("<b>AI Mock Interview — Executive Performance Summary</b>", title_style),
+            [Paragraph("<b>AI Mock Interview - Executive Performance Summary</b>", title_style),
              Paragraph(f"<b>Date:</b> {date_str}<br/><b>Target:</b> {job_role}", body_style)]
         ], colWidths=[380, 160])
         story.append(header)

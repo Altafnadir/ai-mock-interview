@@ -290,7 +290,7 @@ class ResumeParser:
             if any(r in line_lower for r in exp_roles) and len(line) < 90:
                 # Potential next line might be description or company
                 desc = lines[i + 1] if i + 1 < len(lines) else ""
-                duration_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*\d{4}|\d{4})\s*[-–to]+\s*(Present|\d{4}|[a-z]+\s*\d{4})', line, re.I)
+                duration_match = re.search(r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*\d{4}|\d{4})\s*[\-\u2013to]+\s*(Present|\d{4}|[a-z]+\s*\d{4})', line, re.I)
                 duration = duration_match.group(0) if duration_match else "N/A"
 
                 experience.append({
