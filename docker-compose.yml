@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mock_interview_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_mock_interview}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_mock_interview"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mock_interview_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_mock_interview
+      - ENVIRONMENT=production
+      - API_V1_STR=/api/v1
+      - SECRET_KEY=${SECRET_KEY:-gims-bsse-f202206-super-secret-key-change-in-production-min32bytes}
+      - FIRST_ADMIN_EMAIL=${FIRST_ADMIN_EMAIL:-admin@gims.edu.pk}
+      - FIRST_ADMIN_PASSWORD=${FIRST_ADMIN_PASSWORD:-AdminSecurePassword123!}
+      - FIRST_ADMIN_NAME=${FIRST_ADMIN_NAME:-System Administrator}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE:-base}
+      - LANGUAGETOOL_URL=${LANGUAGETOOL_URL:-https://api.languagetoolplus.com/v2}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - STORAGE_DIR=/app/storage
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./storage:/app/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mock_interview_ai_worker
+    restart: always
+    command: ["python", "-m", "app.workers.run"]
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_mock_interview
+      - ENVIRONMENT=production
+      - API_V1_STR=/api/v1
+      - SECRET_KEY=${SECRET_KEY:-gims-bsse-f202206-super-secret-key-change-in-production-min32bytes}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE:-base}
+      - LANGUAGETOOL_URL=${LANGUAGETOOL_URL:-https://api.languagetoolplus.com/v2}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - STORAGE_DIR=/app/storage
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-2}
+    volumes:
+      - ./storage:/app/storage
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mock_interview_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+      - "80:80"
+
+
+volumes:
+  postgres_data:
+    driver: local

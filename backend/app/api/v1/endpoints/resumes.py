@@ -1,0 +1,212 @@
+import os
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from sqlalchemy.orm import Session
+from typing import List, Any, Optional
+from pathlib import Path
+
+from app.core.deps import get_current_user
+from app.db.session import get_db
+from app.db.models.user import User, CandidateProfile
+from app.db.models.resume import Resume, ResumeAnalysis
+from app.db.models.interview import JobRole
+from app.schemas.resume import ResumeResponse, ResumeAnalysisResponse, ResumeAnalyzeRequest
+from app.services.storage import storage_service
+from app.ai.resume_parser import resume_parser
+
+router = APIRouter()
+
+@router.post("", response_model=ResumeResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/upload", response_model=ResumeResponse, status_code=status.HTTP_201_CREATED)
+def upload_resume(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Upload resume (PDF or DOCX), extract text, parse sections, and initialize analysis."""
+    allowed_exts = [".pdf", ".docx"]
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file format: {ext}. Only PDF and DOCX files are supported."
+        )
+
+    # Save to storage
+    stored_path, original_filename = storage_service.save_upload_file(
+        file=file,
+        folder="resumes",
+        allowed_extensions=allowed_exts
+    )
+
+    file_type = "pdf" if ext == ".pdf" else "docx"
+
+    # Create Resume DB record
+    resume = Resume(
+        user_id=current_user.id,
+        file_path=stored_path,
+        original_filename=original_filename,
+        file_type=file_type,
+        is_active=True
+    )
+    db.add(resume)
+    db.flush()
+
+    # Extract text and parse
+    abs_path = storage_service.get_absolute_path(stored_path)
+    raw_text = ""
+    try:
+        raw_text = resume_parser.extract_text(str(abs_path), file_type)
+    except Exception as e:
+        raw_text = ""
+
+    parsed = resume_parser.parse(raw_text)
+
+    # Determine target role for initial gap analysis
+    target_role = "Full Stack Developer"
+    candidate_profile = db.query(CandidateProfile).filter(CandidateProfile.user_id == current_user.id).first()
+    if candidate_profile and candidate_profile.preferred_job_roles:
+        target_role = candidate_profile.preferred_job_roles[0]
+
+    gap_data = resume_parser.analyze_skills_gap(parsed.get("extracted_skills", []), target_role)
+
+    # Save Analysis record
+    analysis = ResumeAnalysis(
+        resume_id=resume.id,
+        extracted_education=parsed.get("extracted_education", []),
+        extracted_skills=parsed.get("extracted_skills", []),
+        extracted_projects=parsed.get("extracted_projects", []),
+        extracted_certifications=parsed.get("extracted_certifications", []),
+        extracted_experience=parsed.get("extracted_experience", []),
+        missing_skills=gap_data.get("missing_skills", []),
+        weak_sections=parsed.get("weak_sections", []),
+        improvement_suggestions=parsed.get("improvement_suggestions", []),
+        status="analyzed",
+        raw_text=raw_text
+    )
+    db.add(analysis)
+
+    # Auto-populate CandidateProfile skills if profile exists and has no skills
+    if candidate_profile and not candidate_profile.skills and parsed.get("extracted_skills"):
+        candidate_profile.skills = parsed.get("extracted_skills")
+
+    db.commit()
+    db.refresh(resume)
+
+    return resume
+
+@router.get("", response_model=List[ResumeResponse])
+def get_resumes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """List all resumes uploaded by the current candidate."""
+    resumes = db.query(Resume).filter(Resume.user_id == current_user.id).order_by(Resume.uploaded_at.desc()).all()
+    return resumes
+
+@router.get("/{resume_id}", response_model=ResumeResponse)
+def get_resume(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Get single resume with parsed details."""
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+    if resume.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    return resume
+
+@router.delete("/{resume_id}")
+def delete_resume(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Delete resume and associated storage file."""
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+    if resume.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    storage_service.delete_file(resume.file_path)
+    db.delete(resume)
+    db.commit()
+
+    return {"message": "Resume deleted successfully"}
+
+@router.post("/{resume_id}/analyze", response_model=ResumeAnalysisResponse)
+def reanalyze_resume(
+    resume_id: str,
+    payload: Optional[ResumeAnalyzeRequest] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Re-analyze resume against a specified target Job Role to compute updated missing skills and gap analysis."""
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+    if resume.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    target_role_name = payload.job_role_name if payload else None
+    if not target_role_name and payload and payload.job_role_id:
+        role = db.query(JobRole).filter(JobRole.id == payload.job_role_id).first()
+        if role:
+            target_role_name = role.name
+
+    if not target_role_name:
+        candidate_profile = db.query(CandidateProfile).filter(CandidateProfile.user_id == current_user.id).first()
+        if candidate_profile and candidate_profile.preferred_job_roles:
+            target_role_name = candidate_profile.preferred_job_roles[0]
+        else:
+            target_role_name = "Full Stack Developer"
+
+    analysis = resume.analysis
+    if not analysis:
+        # Generate initial analysis
+        abs_path = storage_service.get_absolute_path(resume.file_path)
+        raw_text = resume_parser.extract_text(str(abs_path), resume.file_type)
+        parsed = resume_parser.parse(raw_text)
+        analysis = ResumeAnalysis(
+            resume_id=resume.id,
+            extracted_education=parsed.get("extracted_education", []),
+            extracted_skills=parsed.get("extracted_skills", []),
+            extracted_projects=parsed.get("extracted_projects", []),
+            extracted_certifications=parsed.get("extracted_certifications", []),
+            extracted_experience=parsed.get("extracted_experience", []),
+            weak_sections=parsed.get("weak_sections", []),
+            improvement_suggestions=parsed.get("improvement_suggestions", []),
+            status="analyzed",
+            raw_text=raw_text
+        )
+        db.add(analysis)
+        db.flush()
+
+    gap_data = resume_parser.analyze_skills_gap(analysis.extracted_skills or [], target_role_name)
+    analysis.missing_skills = gap_data.get("missing_skills", [])
+    analysis.status = "analyzed"
+    db.commit()
+    db.refresh(analysis)
+
+    return analysis
+
+@router.get("/{resume_id}/analysis", response_model=ResumeAnalysisResponse)
+def get_resume_analysis(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Retrieve full AI analysis for a resume."""
+    resume = db.query(Resume).filter(Resume.id == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+    if resume.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    if not resume.analysis:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analysis not found for this resume")
+
+    return resume.analysis
