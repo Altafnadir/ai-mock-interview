@@ -140,3 +140,38 @@ def test_notifications_workflow(auth_header):
     # Mark all read
     all_read = client.put("/api/v1/notifications/read-all", headers=auth_header)
     assert all_read.status_code == 200
+
+def test_compare_sessions(auth_header):
+    # Fetch recent sessions from dashboard
+    dash_res = client.get("/api/v1/dashboard/overview", headers=auth_header)
+    assert dash_res.status_code == 200
+    recent = dash_res.json()["recent_sessions"]
+    if len(recent) >= 2:
+        id1, id2 = recent[0]["id"], recent[1]["id"]
+        res = client.get(f"/api/v1/dashboard/compare?ids={id1},{id2}", headers=auth_header)
+        assert res.status_code == 200
+        comp = res.json()["comparison"]
+        assert len(comp) == 2
+        assert comp[0]["session_id"] in [id1, id2]
+        assert "overall_score" in comp[0]
+
+def test_recommender_re_ranking():
+    from app.ai.feedback_generator import feedback_generator
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == "candidate@gims.edu.pk").first()
+        assert user is not None
+        recs = feedback_generator.create_recommendations(
+            db=db,
+            user_id=user.id,
+            session_id="dummy-session-123",
+            weak_area_tags=["star_method", "filler_words", "eye_contact", "technical"]
+        )
+        assert len(recs) > 0
+        tag_list = [r.weak_area_tag for r in recs]
+        assert any(t in feedback_generator.CANONICAL_TAGS for t in tag_list)
+        for r in recs:
+            assert len(r.practice_suggestion) > 10
+    finally:
+        db.close()
+
