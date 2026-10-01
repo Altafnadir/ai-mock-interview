@@ -5,6 +5,8 @@ from app.db.session import SessionLocal
 from app.db.models.user import User
 from app.db.models.system import Notification
 from app.db.models.resource import LearningResource
+from app.db.models.interview import InterviewSession, JobRole, InterviewCategory, DifficultyLevel
+from app.db.models.report import Report
 
 client = TestClient(app)
 
@@ -103,6 +105,46 @@ def test_get_practice_drills(auth_header):
     drills = res.json()
     assert len(drills) >= 4
     assert any(d["tag"] == "filler_words" for d in drills)
+
+def test_get_personalized_practice_drills(auth_header):
+    db = SessionLocal()
+    user = db.query(User).filter(User.email == "candidate@gims.edu.pk").first()
+    assert user is not None
+
+    role = db.query(JobRole).first()
+    category = db.query(InterviewCategory).first()
+    difficulty = db.query(DifficultyLevel).first()
+
+    session = InterviewSession(
+        user_id=user.id,
+        job_role_id=role.id if role else None,
+        category_id=category.id if category else None,
+        difficulty_id=difficulty.id if difficulty else None,
+        status="completed"
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+
+    report = Report(
+        session_id=session.id,
+        overall_score=62.0,
+        confidence_score=55.0,
+        communication_score=58.0,
+        content_score=60.0,
+        weaknesses=["Excessive Filler Words", "System Architecture Tradeoffs"],
+        strengths=["Positive Demeanor"]
+    )
+    db.add(report)
+    db.commit()
+
+    res = client.get("/api/v1/practice/drills", headers=auth_header)
+    assert res.status_code == 200
+    drills = res.json()
+    assert len(drills) >= 4
+    assert any(d.get("is_personalized") is True for d in drills)
+    assert any(d.get("tag") == "filler_words" for d in drills)
+    assert any(len(d.get("suggested_questions", [])) > 0 for d in drills)
 
 def test_notifications_workflow(auth_header):
     # Ensure there is at least one notification

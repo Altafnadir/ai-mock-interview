@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Video,
   Mic,
@@ -9,6 +9,7 @@ import {
   Play,
   Settings,
   HelpCircle,
+  Sparkles,
 } from 'lucide-react';
 import { interviewApi } from '../../api/interview';
 import { resumeApi } from '../../api/resume';
@@ -19,6 +20,11 @@ import Loader from '../../components/common/Loader';
 
 export default function InterviewSetupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const prefillTopic = searchParams.get('topic') || '';
+  const prefillRole = searchParams.get('role') || '';
+  const prefillCategory = searchParams.get('category') || '';
+  const prefillDifficulty = searchParams.get('difficulty') || '';
 
   // Taxonomy & Resume state
   const [jobRoles, setJobRoles] = useState([]);
@@ -77,31 +83,51 @@ export default function InterviewSetupPage() {
       setDifficulties(dRes.data);
       setResumes(resRes.data);
 
-      if (rRes.data.length > 0) setSelectedRole(rRes.data[0].id);
-      if (cRes.data.length > 0) setSelectedCategory(cRes.data[0].id);
-      if (dRes.data.length > 0) setSelectedDifficulty(dRes.data[0].id);
+      const matchedRole = rRes.data.find(
+        (r) => r.id === prefillRole || r.name.toLowerCase().includes((prefillRole || '').toLowerCase())
+      );
+      const matchedCat = cRes.data.find(
+        (c) => c.id === prefillCategory || c.name.toLowerCase().includes((prefillCategory || '').toLowerCase())
+      );
+      const matchedDiff = dRes.data.find(
+        (d) => d.id === prefillDifficulty || d.name.toLowerCase().includes((prefillDifficulty || '').toLowerCase())
+      );
+
+      setSelectedRole(matchedRole ? matchedRole.id : (rRes.data[0]?.id || ''));
+      setSelectedCategory(matchedCat ? matchedCat.id : (cRes.data[0]?.id || ''));
+      setSelectedDifficulty(matchedDiff ? matchedDiff.id : (dRes.data[0]?.id || ''));
       if (resRes.data.length > 0) setSelectedResume(resRes.data[0].id);
-    } catch (err) {
+    } catch {
       // Seeded fallback options for local testing
-      setJobRoles([
+      const fbRoles = [
         { id: 'r1', name: 'Frontend Developer' },
         { id: 'r2', name: 'Backend Developer' },
         { id: 'r3', name: 'Full Stack Developer' },
         { id: 'r4', name: 'Software Engineer' },
-      ]);
-      setCategories([
+      ];
+      const fbCats = [
         { id: 'c1', name: 'Technical' },
         { id: 'c2', name: 'HR' },
         { id: 'c3', name: 'Behavioral' },
         { id: 'c4', name: 'Mixed' },
-      ]);
-      setDifficulties([
+      ];
+      const fbDiffs = [
         { id: 'd1', name: 'Beginner' },
         { id: 'd2', name: 'Intermediate' },
         { id: 'd3', name: 'Advanced' },
-      ]);
-      setSelectedRole('r1');
-      setSelectedCategory('c4');
+      ];
+      setJobRoles(fbRoles);
+      setCategories(fbCats);
+      setDifficulties(fbDiffs);
+
+      const matchedRole = fbRoles.find(
+        (r) => r.id === prefillRole || r.name.toLowerCase().includes((prefillRole || '').toLowerCase())
+      );
+      const matchedCat = fbCats.find(
+        (c) => c.id === prefillCategory || c.name.toLowerCase().includes((prefillCategory || '').toLowerCase())
+      );
+      setSelectedRole(matchedRole ? matchedRole.id : 'r1');
+      setSelectedCategory(matchedCat ? matchedCat.id : 'c4');
       setSelectedDifficulty('d1');
     } finally {
       setIsInitializing(false);
@@ -192,6 +218,19 @@ export default function InterviewSetupPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Setup Form (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
+          {prefillTopic && (
+            <div className="bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 rounded-lg p-3.5 flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 shrink-0" />
+              <div>
+                <h4 className="text-xs font-bold text-primary-900 dark:text-primary-200">
+                  Targeted Practice Drill Mode Active
+                </h4>
+                <p className="text-xs text-primary-700 dark:text-primary-300 mt-0.5">
+                  Parameters have been pre-configured to target: <strong>{prefillTopic}</strong>.
+                </p>
+              </div>
+            </div>
+          )}
           <Card title="Interview Parameters" className="border-slate-200 dark:border-slate-800">
             <form onSubmit={handleStartInterview} className="space-y-4">
               {/* Job Role Selection */}
