@@ -31,6 +31,7 @@ export default function InterviewRoomPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Hardware and MediaRecorder refs
   const videoRef = useRef(null);
@@ -42,6 +43,18 @@ export default function InterviewRoomPage() {
   useEffect(() => {
     initializeSession();
 
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success('Internet connection restored.');
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning('Internet connection lost. Local buffering enabled.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     // Prevent accidental page refresh/leave
     const handleBeforeUnload = (e) => {
       e.preventDefault();
@@ -50,11 +63,14 @@ export default function InterviewRoomPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       cleanupMedia();
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [sessionId]);
+
 
   // When question changes, speak question if TTS enabled
   useEffect(() => {
@@ -287,8 +303,16 @@ export default function InterviewRoomPage() {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
+      {!isOnline && (
+        <div className="bg-amber-600/90 text-white text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-lg z-50">
+          <AlertTriangle className="w-4 h-4 animate-bounce" />
+          <span>Network connection lost. All video chunks are safely buffered locally and will synchronize once reconnected.</span>
+        </div>
+      )}
+
       {/* Top HUD Bar */}
       <header className="h-16 px-6 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between">
+
         <div className="flex items-center gap-4">
           <Badge variant="primary" size="md">
             Question {currentIndex + 1} of {questions.length}

@@ -8,7 +8,7 @@
 - [x] **Phase 1: Foundation** — Repo, Docker Compose (frontend, backend, ai-worker, postgres), ffmpeg + pinned AI deps, config, models + migrations, seeds, health check.
 - [x] **Phase 2: Auth + Frontend Shell** — Full auth (email/Google/OTP/JWT/reset), layouts, routing, guards, design system, ALL page skeletons.
 - [x] **Phase 3: Profile + Resume** — Profile APIs/UI, resume upload/replace, parsing + AI analysis UI, verification on >= 10 resumes.
-- [ ] **Phase 4: Interview Engine** — Meta, question generation + follow-ups, session APIs, interview room (recording, timers, skip/repeat/next/end, autosave, resilient upload).
+- [x] **Phase 4: Interview Engine** — Meta, question generation + follow-ups, session APIs, interview room (recording, timers, skip/repeat/next/end, autosave, resilient upload).
 - [ ] **Phase 5: AI Modules + Pipeline** — STT, fillers, voice, vision, emotion, grammar, content; job queue + worker + status.
 - [ ] **Phase 6: Scoring, Feedback, Reports** — Scoring engine, feedback, report page, 3 PDFs, sharing, email, notifications.
 - [ ] **Phase 7: Dashboard + Recommendations** — Dashboard, trends, compare, recommender + YouTube resources, practice recommendations.
@@ -41,16 +41,24 @@
   - Resume APIs: `POST /resumes` / `/upload`, `GET /resumes`, `GET /resumes/{id}`, `PUT /resumes/{id}` (replace file), `DELETE /resumes/{id}`, `POST /resumes/{id}/analyze` (gap analysis by target job role), `GET /resumes/{id}/analysis`.
   - Frontend UIs: `ProfilePage.jsx` and `ResumePage.jsx` with drag & drop upload, visual skills gap badges, weak sections, and improvement tips.
   - Verification test suite: `backend/tests/test_resume_parser_10_samples.py` passing 10/10 diverse resumes across PDF and DOCX formats (Requirement S2 satisfied).
+- **Phase 4 (Interview Engine):**
+  - Metadata APIs: `GET /meta/job-roles`, `/categories`, `/difficulties`, `/all`.
+  - Question generator mixing resume context, role, experience level, and difficulty.
+  - Dynamic follow-up generator probing candidate answers (`source="followup"`).
+  - Interview session lifecycle: create, start, current question, submit answer with fillers/wpm, skip, repeat, get progress, end session, reprocess session, recording upload, delete session.
+  - Interview room frontend: live webcam preview, recording indicator, timers with auto-advance, text-to-speech for questions, offline network indicator banner, `beforeunload` leave protection.
+  - Background job registered in `processing_jobs` when interview ends.
+  - Interview test suite passing 3/3 tests.
 
 ---
 
 **NEXT STEP:**
-Phase 4: Interview Engine
-1. Verify Meta endpoints (`/meta/job-roles`, `/categories`, `/difficulties`).
-2. Verify personalized question generation (`POST /interviews`) mixing resume insights, role, experience level, and difficulty.
-3. Verify dynamic follow-up generation from previous question transcript.
-4. Verify Interview Room state machine (`InterviewRoomPage.jsx`): recording indicator, per-question timers, skip, repeat, next, end, autosave progress, connection lost banner, before-unload warning, camera/mic/lighting test with audio meter.
-5. Verify resilience: client-side offline buffering / retry on reconnect and per-question upload.
+Phase 5: AI Modules + Pipeline
+1. Verify all 7 independent AI modules: STT (`stt.py`), Fillers (`filler_detector.py`), Voice DSP (`voice_analyzer.py`), Vision (`vision_analyzer.py`), Emotion (`emotion_analyzer.py`), Grammar (`grammar_analyzer.py`), Content & STAR (`content_evaluator.py`).
+2. Implement AI Plugin Registry in `backend/app/ai/registry.py` (and export from `backend/app/ai/__init__.py`).
+3. Verify ffmpeg media normalization (audio extraction to 16kHz mono WAV, video normalization to H.264 MP4).
+4. Run AI pipeline test suite (`backend/tests/test_ai_pipeline.py`) verifying all stages and fallbacks.
+
 
 
 

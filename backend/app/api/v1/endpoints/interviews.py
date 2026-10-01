@@ -12,6 +12,8 @@ from app.db.models.interview import (
     InterviewSession, SessionQuestion, Answer,
     JobRole, InterviewCategory, DifficultyLevel
 )
+from app.db.models.system import ProcessingJob
+
 from app.schemas.interview import (
     InterviewCreateRequest, InterviewSessionResponse,
     InterviewSessionDetailResponse, SessionQuestionResponse,
@@ -245,6 +247,29 @@ def submit_answer(
     )
     db.add(ans)
 
+    # Dynamic follow-up question generation
+
+    if payload and payload.generate_followup and len(words) >= 4:
+        role_name = session.job_role.name if session.job_role else "Software Engineer"
+        followup_text = question_generator.generate_followup_question(
+            parent_question_text=current_q.question_text,
+            candidate_answer_text=transcript,
+            job_role_name=role_name
+        )
+        if followup_text:
+            all_qs = db.query(SessionQuestion).filter(SessionQuestion.session_id == session.id).all()
+            followup_q = SessionQuestion(
+                session_id=session.id,
+                order_index=len(all_qs) + 1,
+                question_text=followup_text,
+                source="followup",
+                parent_question_id=current_q.id,
+                time_limit_seconds=90,
+                status="pending"
+            )
+            db.add(followup_q)
+            session.total_questions = len(all_qs) + 1
+
     # Activate next question timestamp if present
     next_q = db.query(SessionQuestion).filter(
         SessionQuestion.session_id == session.id,
@@ -253,6 +278,7 @@ def submit_answer(
 
     if next_q:
         next_q.started_at = now
+
 
     db.commit()
     db.refresh(current_q)
@@ -397,13 +423,97 @@ def end_interview(
         session.duration_seconds = int((now - session.started_at).total_seconds())
 
     session.status = "completed"
+    
+    # Register job in processing_jobs queue table
+    job = ProcessingJob(
+        session_id=session.id,
+        step="all",
+        status="queued"
+    )
+    db.add(job)
     db.commit()
     db.refresh(session)
 
-    # Queue background analysis pipeline
+    # Trigger background pipeline
     background_tasks.add_task(run_pipeline_task, session.id)
 
     return session
+
+@router.post("/{session_id}/reprocess", response_model=InterviewSessionResponse)
+def reprocess_interview(
+    session_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Re-queue the AI analysis pipeline for this session."""
+    session = db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interview session not found")
+    if session.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    session.status = "processing"
+    session.processing_error = None
+    job = ProcessingJob(session_id=session.id, step="all", status="queued")
+    db.add(job)
+    db.commit()
+    db.refresh(session)
+
+    background_tasks.add_task(run_pipeline_task, session.id)
+    return session
+
+@router.delete("/{session_id}")
+def delete_interview_session(
+    session_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Delete an interview session and its media files."""
+    session = db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interview session not found")
+    if session.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    if session.video_path:
+        storage_service.delete_file(session.video_path)
+    if session.audio_path:
+        storage_service.delete_file(session.audio_path)
+
+    db.delete(session)
+    db.commit()
+    return {"message": "Interview session deleted successfully"}
+
+@router.post("/{session_id}/recording")
+def upload_interview_recording(
+    session_id: str,
+    video_file: Optional[UploadFile] = File(None),
+    audio_file: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Save the full session audio and/or video recording."""
+    session = db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interview session not found")
+    if session.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    if video_file:
+        v_path, _ = storage_service.save_upload_file(video_file, folder="recordings")
+        session.video_path = v_path
+    if audio_file:
+        a_path, _ = storage_service.save_upload_file(audio_file, folder="recordings")
+        session.audio_path = a_path
+
+    db.commit()
+    return {
+        "message": "Recording uploaded successfully",
+        "video_path": session.video_path,
+        "audio_path": session.audio_path
+    }
+
 
 @router.post("/{session_id}/process", response_model=InterviewSessionResponse)
 def process_interview_manually(

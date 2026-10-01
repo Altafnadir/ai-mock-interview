@@ -144,3 +144,59 @@ def test_interview_session_lifecycle():
     st = status_resp.json()
     assert st["status"] in ["completed", "analyzed", "processing"]
     assert st["progress_percentage"] >= 50
+
+def test_dynamic_followup_and_session_management():
+    token = get_candidate_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    meta = client.get("/api/v1/meta/all").json()
+    role_id = meta["job_roles"][0]["id"]
+    category_id = meta["categories"][0]["id"]
+    difficulty_id = meta["difficulties"][0]["id"]
+
+    # 1. Create Session
+    create_resp = client.post("/api/v1/interviews", json={
+        "job_role_id": role_id,
+        "category_id": category_id,
+        "difficulty_id": difficulty_id,
+        "total_questions": 2
+    }, headers=headers)
+    assert create_resp.status_code == 201
+    session_id = create_resp.json()["id"]
+
+    # Start
+    client.post(f"/api/v1/interviews/{session_id}/start", headers=headers)
+
+    # 2. Answer with dynamic follow-up requested
+    ans_resp = client.post(f"/api/v1/interviews/{session_id}/answer", json={
+        "transcript": "I designed the backend database schema using PostgreSQL and added indexes to solve slow query latency under load.",
+        "duration_seconds": 35.0,
+        "generate_followup": True
+    }, headers=headers)
+    assert ans_resp.status_code == 200
+
+    # Verify session now has follow-up question
+    detail = client.get(f"/api/v1/interviews/{session_id}", headers=headers).json()
+    assert len(detail["questions"]) >= 2
+    assert any(q["source"] == "followup" for q in detail["questions"])
+
+    # 3. Test recording upload
+    import io
+    fake_audio = io.BytesIO(b"RIFF....WAVEfmt ....data....")
+    rec_resp = client.post(
+        f"/api/v1/interviews/{session_id}/recording",
+        files={"audio_file": ("answer.wav", fake_audio.getvalue(), "audio/wav")},
+        headers=headers
+    )
+    assert rec_resp.status_code == 200
+    assert "audio_path" in rec_resp.json()
+
+    # 4. Test reprocess
+    rep_resp = client.post(f"/api/v1/interviews/{session_id}/reprocess", headers=headers)
+    assert rep_resp.status_code == 200
+
+    # 5. Delete session
+    del_resp = client.delete(f"/api/v1/interviews/{session_id}", headers=headers)
+    assert del_resp.status_code == 200
+    assert "deleted successfully" in del_resp.json()["message"]
+

@@ -86,6 +86,8 @@ class InterviewSessionDetailResponse(InterviewSessionResponse):
 class AnswerSubmitRequest(BaseModel):
     transcript: Optional[str] = ""
     duration_seconds: Optional[float] = 0.0
+    generate_followup: Optional[bool] = False
+
 
 class InterviewProgressResponse(BaseModel):
     session_id: str
