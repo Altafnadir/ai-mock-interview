@@ -45,16 +45,31 @@ storage/posters/*
 !storage/posters/.gitkeep
 storage/avatars/*
 !storage/avatars/.gitkeep
+storage/backups/*
+!storage/backups/.gitkeep
+backend/storage/*
+!backend/storage/.gitkeep
 
-# Testing & Coverage
+# Database & Clusters
+*.sqlite
+*.sqlite3
+*.db
+.pg_data/
+*.sql
+
+# Logs & Caches
+*.log
+.cache/
 .pytest_cache/
 .coverage
 htmlcov/
-*.sqlite3
-*.db
+models_cache/
+.huggingface/
+.deepface/
 
 # IDE & OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+

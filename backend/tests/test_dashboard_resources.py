@@ -203,10 +203,26 @@ def test_recommender_re_ranking():
     try:
         user = db.query(User).filter(User.email == "candidate@gims.edu.pk").first()
         assert user is not None
+        session = db.query(InterviewSession).filter(InterviewSession.user_id == user.id).first()
+        if not session:
+            role = db.query(JobRole).first()
+            category = db.query(InterviewCategory).first()
+            difficulty = db.query(DifficultyLevel).first()
+            session = InterviewSession(
+                user_id=user.id,
+                job_role_id=role.id if role else None,
+                category_id=category.id if category else None,
+                difficulty_id=difficulty.id if difficulty else None,
+                status="completed"
+            )
+            db.add(session)
+            db.commit()
+            db.refresh(session)
+
         recs = feedback_generator.create_recommendations(
             db=db,
             user_id=user.id,
-            session_id="dummy-session-123",
+            session_id=session.id,
             weak_area_tags=["star_method", "filler_words", "eye_contact", "technical"]
         )
         assert len(recs) > 0
