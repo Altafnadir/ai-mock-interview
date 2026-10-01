@@ -10,7 +10,7 @@
 - [x] **Phase 3: Profile + Resume** — Profile APIs/UI, resume upload/replace, parsing + AI analysis UI, verification on >= 10 resumes.
 - [x] **Phase 4: Interview Engine** — Meta, question generation + follow-ups, session APIs, interview room (recording, timers, skip/repeat/next/end, autosave, resilient upload).
 - [x] **Phase 5: AI Modules + Pipeline** — STT, fillers, voice, vision, emotion, grammar, content; job queue + worker + status.
-- [ ] **Phase 6: Scoring, Feedback, Reports** — Scoring engine, feedback, report page, 3 PDFs, sharing, email, notifications.
+- [x] **Phase 6: Scoring, Feedback, Reports** — Scoring engine, feedback, report page, 3 PDFs, sharing, email, notifications.
 - [ ] **Phase 7: Dashboard + Recommendations** — Dashboard, trends, compare, recommender + YouTube resources, practice recommendations.
 - [ ] **Phase 8: Admin Panel** — All admin APIs + UIs, monitoring, backup/restore, maintenance mode.
 - [ ] **Phase 9: Hardening** — Security review, rate limits, logging, performance timing, responsive/accessibility pass, Safari/mobile recording check.
@@ -56,15 +56,22 @@
   - Resilient pipeline execution in `backend/app/workers/pipeline.py` with individual module try/except isolation, real-time `processing_jobs.step` updates, and composite confidence synthesis (voice + emotion + eye contact + posture + fillers).
   - Scoring engine upgraded with 7-dimensional weighted matrix (Content 25, Comm 15, Voice 15, Conf 15, Eye 10, Body 10, Grammar 10) and standard verdict bands ("Excellent", "Good", "Needs Improvement", "Needs Significant Practice").
   - Test suite passing 8/8 tests (`backend/tests/test_ai_pipeline.py`).
+- **Phase 6 (Scoring, Feedback, Reports):**
+  - Enhanced ReportLab PDF Builder (`backend/app/reports/pdf_builder.py`) generating all 3 official formats: Full Comprehensive Multi-Page PDF, 1-page condensed AI Performance Summary, and aesthetic dark-mode Performance Poster.
+  - Report endpoints verified: `GET /reports/{sid}`, `GET /reports/{sid}/pdf`, `GET /reports/{sid}/summary-pdf`, `GET /reports/{sid}/poster`, `POST /reports/{sid}/share`, `DELETE /reports/share/{id}`, `GET /public/reports/{token}` (unauthenticated), `POST /reports/{sid}/email`.
+  - Frontend Report UI updated (`ReportPage.jsx`) with all 6 required actions: Download Full PDF, AI Summary, Poster, Printable Copy (`window.print`), Share Link with copy-to-clipboard modal, and Email Report dispatch.
+  - Frontend verified with clean Vite production build.
+  - Report test suite passing (`backend/tests/test_reports.py`).
 
 ---
 
 **NEXT STEP:**
-Phase 6: Scoring, Feedback, Reports
-1. Verify report generation endpoints: `GET /reports/{sid}`, `/pdf`, `/summary-pdf`, `/poster`, `POST /reports/{sid}/share`, `DELETE /reports/share/{id}`, `GET /public/reports/{token}` (no auth), `POST /reports/{sid}/email`.
-2. Enhance `pdf_builder.py` with 1-page condensed AI Summary PDF (`build_summary_pdf`) and Performance Poster PDF (`build_poster_pdf`) alongside full report PDF.
-3. Verify Report frontend UI (`ReportPage.jsx` and `SharedReportPage.jsx`) with all charts, filler-word counters, STAR breakdowns, and download buttons.
-4. Run `backend/tests/test_reports.py`.
+Phase 7: Dashboard + Recommendations
+1. Verify candidate dashboard overview, trends, and comparison endpoints (`/dashboard/overview`, `/dashboard/trends`, `/dashboard/compare?ids=`).
+2. Verify personalized recommendations with 8 weak-area tags (`eye_contact`, `communication`, `star_method`, `filler_words`, `technical`, `confidence`, `english_pronunciation`, `body_language`) and dynamic re-ranking over time.
+3. Verify Dashboard frontend (`DashboardPage.jsx`), History/Compare (`HistoryPage.jsx`), and Learning Resources / Practice pages (`ResourcesPage.jsx`, `PracticeRecommendationsPage.jsx`).
+4. Run `backend/tests/test_dashboard_resources.py`.
+
 
 
 

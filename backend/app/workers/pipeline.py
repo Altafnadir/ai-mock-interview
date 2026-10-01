@@ -393,6 +393,8 @@ class PipelineWorker:
             ]
 
             pdf_path = None
+            summary_pdf_path = None
+            poster_path = None
             try:
                 pdf_path = pdf_builder.build_report_pdf(
                     session_id=session.id,
@@ -410,6 +412,27 @@ class PipelineWorker:
                     improvement_tips=feedback_data["improvement_tips"],
                     questions_data=question_evals,
                     recommendations=rec_list_for_pdf
+                )
+                summary_pdf_path = pdf_builder.build_summary_pdf(
+                    session_id=session.id,
+                    candidate_name=c_name,
+                    job_role=role_name,
+                    date_str=date_str,
+                    overall_score=calculated_scores["overall_score"],
+                    final_verdict=calculated_scores["final_verdict"],
+                    score_breakdown=calculated_scores,
+                    strengths=feedback_data["strengths"],
+                    weaknesses=feedback_data["weaknesses"],
+                    top_tips=feedback_data["improvement_tips"]
+                )
+                poster_path = pdf_builder.build_poster_pdf(
+                    session_id=session.id,
+                    candidate_name=c_name,
+                    job_role=role_name,
+                    overall_score=calculated_scores["overall_score"],
+                    final_verdict=calculated_scores["final_verdict"],
+                    score_breakdown=calculated_scores,
+                    strengths=feedback_data["strengths"]
                 )
             except Exception as e:
                 logger.warning(f"PDF generation warning: {e}")
@@ -439,6 +462,10 @@ class PipelineWorker:
             report_entry.final_verdict = calculated_scores["final_verdict"]
             if pdf_path:
                 report_entry.pdf_path = pdf_path
+            if summary_pdf_path:
+                report_entry.summary_pdf_path = summary_pdf_path
+            if poster_path:
+                report_entry.poster_path = poster_path
 
             session.status = "analyzed"
             session.processing_error = "; ".join(module_errors) if module_errors else None

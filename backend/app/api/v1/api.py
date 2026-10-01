@@ -15,7 +15,7 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(admin.router, prefix="/admin", tags=["Admin Console"])
 
 # Public / shortcut routes
-api_router.add_api_route("/public/reports/{token}", reports.get_public_report, methods=["GET"], tags=["Reports"])
+api_router.add_api_route("/public/reports/{token}", reports.get_public_report, methods=["GET"], response_model=reports.ReportResponse, tags=["Reports"])
 api_router.add_api_route("/public/reports/{token}/pdf", reports.download_public_report_pdf, methods=["GET"], tags=["Reports"])
 api_router.add_api_route("/recommendations", resources.get_user_recommendations, methods=["GET"], response_model=list[resources.RecommendationResponse], tags=["Learning Resources"])
 

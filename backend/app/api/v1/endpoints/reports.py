@@ -132,6 +132,125 @@ def download_session_report_pdf(
         filename=f"Mock_Interview_Report_{session.id[:8]}.pdf"
     )
 
+@router.get("/{session_id}/summary-pdf")
+def download_session_summary_pdf(
+    session_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Download 1-page condensed AI Performance Summary PDF."""
+    session = db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interview session not found")
+    if session.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    report = db.query(Report).filter(Report.session_id == session.id).first()
+    if not report:
+        pipeline_worker.process_session(session.id, db)
+        report = db.query(Report).filter(Report.session_id == session.id).first()
+
+    if not report.summary_pdf_path or not storage_service.get_absolute_path(report.summary_pdf_path).exists():
+        from app.reports.pdf_builder import pdf_builder
+        scores = {
+            "content_score": report.content_score,
+            "communication_score": report.communication_score,
+            "voice_score": report.voice_score,
+            "confidence_score": report.confidence_score,
+            "eye_contact_score": report.eye_contact_score,
+            "body_language_score": report.body_language_score,
+            "grammar_score": report.grammar_score
+        }
+        sum_path = pdf_builder.build_summary_pdf(
+            session_id=session.id,
+            candidate_name=current_user.full_name,
+            job_role=session.job_role.name if session.job_role else "Candidate",
+            date_str=session.created_at.strftime("%B %d, %Y"),
+            overall_score=report.overall_score,
+            final_verdict=report.final_verdict,
+            score_breakdown=scores,
+            strengths=report.strengths or [],
+            weaknesses=report.weaknesses or [],
+            top_tips=report.improvement_tips or []
+        )
+        report.summary_pdf_path = sum_path
+        db.commit()
+
+    abs_path = storage_service.get_absolute_path(report.summary_pdf_path)
+    return FileResponse(
+        path=str(abs_path),
+        media_type="application/pdf",
+        filename=f"AI_Performance_Summary_{session.id[:8]}.pdf"
+    )
+
+@router.get("/{session_id}/poster")
+def download_session_poster_pdf(
+    session_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Download aesthetic visual Performance Poster PDF."""
+    session = db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interview session not found")
+    if session.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    report = db.query(Report).filter(Report.session_id == session.id).first()
+    if not report:
+        pipeline_worker.process_session(session.id, db)
+        report = db.query(Report).filter(Report.session_id == session.id).first()
+
+    if not report.poster_path or not storage_service.get_absolute_path(report.poster_path).exists():
+        from app.reports.pdf_builder import pdf_builder
+        scores = {
+            "content_score": report.content_score,
+            "communication_score": report.communication_score,
+            "voice_score": report.voice_score,
+            "confidence_score": report.confidence_score,
+            "eye_contact_score": report.eye_contact_score,
+            "body_language_score": report.body_language_score,
+            "grammar_score": report.grammar_score
+        }
+        post_path = pdf_builder.build_poster_pdf(
+            session_id=session.id,
+            candidate_name=current_user.full_name,
+            job_role=session.job_role.name if session.job_role else "Candidate",
+            overall_score=report.overall_score,
+            final_verdict=report.final_verdict,
+            score_breakdown=scores,
+            strengths=report.strengths or []
+        )
+        report.poster_path = post_path
+        db.commit()
+
+    abs_path = storage_service.get_absolute_path(report.poster_path)
+    return FileResponse(
+        path=str(abs_path),
+        media_type="application/pdf",
+        filename=f"Performance_Poster_{session.id[:8]}.pdf"
+    )
+
+@router.delete("/share/{share_id}")
+def revoke_report_share(
+    share_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Revoke an active public share link for an interview report."""
+    share = db.query(ReportShare).filter(ReportShare.id == share_id).first()
+    if not share:
+        # Also try searching by token if client passed token
+        share = db.query(ReportShare).filter(ReportShare.token == share_id).first()
+    if not share:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share link not found")
+    if share.created_by != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    share.is_revoked = True
+    db.commit()
+    return {"message": "Share link revoked successfully", "id": share.id, "is_revoked": True}
+
 @router.post("/{session_id}/share", response_model=ReportShareResponse)
 def create_report_share_link(
     session_id: str,

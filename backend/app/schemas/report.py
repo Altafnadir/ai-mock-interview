@@ -39,6 +39,7 @@ class ReportResponse(BaseModel):
     improvement_tips: List[str] = Field(default_factory=list)
     final_verdict: str = "Needs Improvement"
     pdf_path: Optional[str] = None
+    summary_pdf_path: Optional[str] = None
     poster_path: Optional[str] = None
     generated_at: datetime
     recommendations: List[RecommendationResponse] = Field(default_factory=list)

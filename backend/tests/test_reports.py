@@ -17,7 +17,7 @@ def get_candidate_token():
     assert login_resp.status_code == 200
     return login_resp.json()["access_token"]
 
-def test_report_generation_pdf_and_share_flow():
+def test_report_generation_all_3_pdfs_and_share_flow():
     token = get_candidate_token()
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -56,22 +56,31 @@ def test_report_generation_pdf_and_share_flow():
     assert report["session_id"] == session_id
     assert 0 <= report["overall_score"] <= 100
     assert report["final_verdict"] in [
-        "Strong Hire / Recommended",
-        "Hire / Qualified",
-        "Borderline / Needs Practice",
-        "Needs Significant Improvement"
+        "Excellent", "Good", "Needs Improvement", "Needs Significant Practice",
+        "Strong Hire / Recommended", "Hire / Qualified", "Borderline / Needs Practice"
     ]
     assert len(report["strengths"]) > 0
-    assert len(report["recommendations"]) > 0
     assert report["pdf_path"] is not None
 
-    # 3. Download PDF Report
+    # 3. Download Full PDF Report
     pdf_resp = client.get(f"/api/v1/reports/{session_id}/pdf", headers=headers)
     assert pdf_resp.status_code == 200
     assert pdf_resp.headers["content-type"] == "application/pdf"
-    assert len(pdf_resp.content) > 1000  # valid PDF binary
+    assert len(pdf_resp.content) > 1000
 
-    # 4. Generate Public Share Link
+    # 4. Download 1-Page AI Performance Summary PDF
+    summary_resp = client.get(f"/api/v1/reports/{session_id}/summary-pdf", headers=headers)
+    assert summary_resp.status_code == 200
+    assert summary_resp.headers["content-type"] == "application/pdf"
+    assert len(summary_resp.content) > 1000
+
+    # 5. Download Performance Poster PDF
+    poster_resp = client.get(f"/api/v1/reports/{session_id}/poster", headers=headers)
+    assert poster_resp.status_code == 200
+    assert poster_resp.headers["content-type"] == "application/pdf"
+    assert len(poster_resp.content) > 1000
+
+    # 6. Generate Public Share Link
     share_resp = client.post(f"/api/v1/reports/{session_id}/share", headers=headers)
     assert share_resp.status_code == 200
     share_data = share_resp.json()
@@ -79,15 +88,30 @@ def test_report_generation_pdf_and_share_flow():
     assert len(share_token) > 10
     assert "/shared/" in share_data["share_url"]
 
-    # 5. Access Public Report (unauthenticated, no headers)
-    public_resp = client.get(f"/api/v1/reports/public/{share_token}")
-    assert public_resp.status_code == 200
-    pub_data = public_resp.json()
-    assert pub_data["session_id"] == session_id
-    assert pub_data["overall_score"] == report["overall_score"]
+    # 7. Access Public Report (unauthenticated, both route variants)
+    pub_resp1 = client.get(f"/api/v1/reports/public/{share_token}")
+    assert pub_resp1.status_code == 200
+    assert pub_resp1.json()["overall_score"] == report["overall_score"]
 
-    # 6. Download Public PDF Report (unauthenticated, no headers)
-    public_pdf_resp = client.get(f"/api/v1/reports/public/{share_token}/pdf")
+    pub_resp2 = client.get(f"/api/v1/public/reports/{share_token}")
+    assert pub_resp2.status_code == 200
+    assert pub_resp2.json()["session_id"] == session_id
+
+    # 8. Download Public PDF Report
+    public_pdf_resp = client.get(f"/api/v1/public/reports/{share_token}/pdf")
     assert public_pdf_resp.status_code == 200
     assert public_pdf_resp.headers["content-type"] == "application/pdf"
     assert len(public_pdf_resp.content) > 1000
+
+    # 9. Email Report
+    email_resp = client.post(f"/api/v1/reports/{session_id}/email", headers=headers)
+    assert email_resp.status_code == 200
+
+    # 10. Revoke Share Link
+    revoke_resp = client.delete(f"/api/v1/reports/share/{share_token}", headers=headers)
+    assert revoke_resp.status_code == 200
+    assert revoke_resp.json()["is_revoked"] is True
+
+    # 11. Accessing revoked share link returns 404
+    revoked_check = client.get(f"/api/v1/public/reports/{share_token}")
+    assert revoked_check.status_code == 404

@@ -19,6 +19,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Layers,
+  Printer,
 } from 'lucide-react';
 import {
   BarChart,
@@ -196,6 +197,9 @@ export default function ReportPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.print()} icon={Printer}>
+            Printable Copy
+          </Button>
           <Button variant="outline" size="sm" onClick={handleShare} icon={Share2}>
             Share Link
           </Button>
@@ -206,11 +210,21 @@ export default function ReportPage() {
             isLoading={isEmailing}
             icon={Mail}
           >
-            Email PDF
+            Email Report
           </Button>
-          <a href={reportApi.getPdfUrl(sessionId)} download="interview_report.pdf" target="_blank" rel="noreferrer">
+          <a href={reportApi.getSummaryPdfUrl(sessionId)} download="AI_Performance_Summary.pdf" target="_blank" rel="noreferrer">
+            <Button variant="secondary" size="sm" icon={FileText}>
+              AI Summary
+            </Button>
+          </a>
+          <a href={reportApi.getPosterUrl(sessionId)} download="Performance_Poster.pdf" target="_blank" rel="noreferrer">
+            <Button variant="secondary" size="sm" icon={Layers}>
+              Poster
+            </Button>
+          </a>
+          <a href={reportApi.getPdfUrl(sessionId)} download="Full_Interview_Report.pdf" target="_blank" rel="noreferrer">
             <Button size="sm" icon={Download}>
-              Download Full PDF
+              Full PDF
             </Button>
           </a>
         </div>
