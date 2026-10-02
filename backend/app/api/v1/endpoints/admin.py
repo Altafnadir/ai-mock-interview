@@ -983,69 +983,58 @@ def _get_active_db_file() -> str:
 
 @router.post("/backup", response_model=admin_schemas.BackupResponse)
 def create_backup(db: Session = Depends(get_db)):
-    backup_dir = os.path.join(settings.STORAGE_DIR, "backups")
-    os.makedirs(backup_dir, exist_ok=True)
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    backup_filename = f"db_backup_{timestamp}.sqlite"
-    backup_filepath = os.path.join(backup_dir, backup_filename)
-
-    db_source = _get_active_db_file()
-    if os.path.exists(db_source):
-        shutil.copy2(db_source, backup_filepath)
-        size_bytes = os.path.getsize(backup_filepath)
-    else:
-        with open(backup_filepath, "w") as f:
-            f.write(f"-- Snapshot GIMS AI Mock Interview: {timestamp}\n")
-        size_bytes = os.path.getsize(backup_filepath)
-
+    from app.services.backup_service import backup_service
+    bk = backup_service.create_backup(db, backup_type="full")
     return admin_schemas.BackupResponse(
-        id=timestamp,
-        filename=backup_filename,
-        size_bytes=size_bytes,
-        created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        id=bk.id,
+        filename=bk.filename,
+        size_bytes=bk.size_bytes,
+        created_at=bk.created_at.strftime("%Y-%m-%d %H:%M:%S")
     )
 
 
 @router.get("/backups", response_model=List[admin_schemas.BackupResponse])
-def get_backups():
+def get_backups(db: Session = Depends(get_db)):
+    from app.db.models.system import Backup
+    backups = db.query(Backup).order_by(desc(Backup.created_at)).all()
+    if backups:
+        return [
+            admin_schemas.BackupResponse(
+                id=b.id,
+                filename=b.filename,
+                size_bytes=b.size_bytes,
+                created_at=b.created_at.strftime("%Y-%m-%d %H:%M:%S") if b.created_at else ""
+            )
+            for b in backups
+        ]
     backup_dir = os.path.join(settings.STORAGE_DIR, "backups")
     os.makedirs(backup_dir, exist_ok=True)
-    backups = []
+    res = []
     for f in os.listdir(backup_dir):
         fp = os.path.join(backup_dir, f)
         if os.path.isfile(fp):
             stat = os.stat(fp)
-            backups.append(
+            res.append(
                 admin_schemas.BackupResponse(
-                    id=f.replace("db_backup_", "").replace(".sqlite", ""),
+                    id=f.replace("db_backup_", "").replace("sqlite_backup_", "").replace("pg_backup_", "").replace(".sqlite", "").replace(".sql", ""),
                     filename=f,
                     size_bytes=stat.st_size,
                     created_at=datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
                 )
             )
-    return backups
+    return res
 
 
 @router.post("/restore/{backup_id}")
-def restore_backup(backup_id: str):
-    backup_dir = os.path.join(settings.STORAGE_DIR, "backups")
-    target_file = None
-    for f in os.listdir(backup_dir):
-        if backup_id in f:
-            target_file = os.path.join(backup_dir, f)
-            break
-
-    if not target_file or not os.path.exists(target_file):
-        raise HTTPException(status_code=404, detail="Backup snapshot not found")
-
-    db_dest = _get_active_db_file()
-    shutil.copy2(target_file, db_dest)
+def restore_backup(backup_id: str, db: Session = Depends(get_db)):
+    from app.services.backup_service import backup_service
     try:
-        from app.db.session import init_db
-        init_db()
-    except Exception:
-        pass
-    return {"message": "Backup snapshot restored successfully", "backup_id": backup_id}
+        res = backup_service.restore_backup(db, backup_id)
+        return res
+    except FileNotFoundError as fe:
+        raise HTTPException(status_code=404, detail=str(fe))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
 
 
 @router.get("/settings/maintenance")
