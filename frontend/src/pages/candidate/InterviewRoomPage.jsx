@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Mic,
   Camera,
   Volume2,
   VolumeX,
@@ -13,11 +12,15 @@ import {
   Sparkles,
   AlertTriangle,
   Maximize2,
+  WifiOff,
+  RefreshCw,
+  Home,
 } from 'lucide-react';
 import { interviewApi } from '../../api/interview';
 import { toast } from '../../store/toastStore';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
+import { bufferFailedAnswer, getBufferedAnswers, removeBufferedAnswer } from '../../utils/offlineStorage';
 
 export default function InterviewRoomPage() {
   const { id: sessionId } = useParams();
@@ -31,7 +34,9 @@ export default function InterviewRoomPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [connectionError, setConnectionError] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // Hardware and MediaRecorder refs
   const videoRef = useRef(null);
@@ -40,12 +45,40 @@ export default function InterviewRoomPage() {
   const recordedChunksRef = useRef([]);
   const timerRef = useRef(null);
 
+  // Sync buffered answers when back online
+  const flushBufferedAnswers = async () => {
+    try {
+      const pending = await getBufferedAnswers();
+      if (!pending || pending.length === 0) return;
+      let syncedCount = 0;
+      for (const item of pending) {
+        if (item.sessionId === sessionId && item.blob) {
+          try {
+            const formData = new FormData();
+            formData.append('video', item.blob, `buffered_answer_${item.questionId}.webm`);
+            await interviewApi.submitAnswer(item.sessionId, item.questionId, formData);
+            await removeBufferedAnswer(item.id);
+            syncedCount += 1;
+          } catch (syncErr) {
+            console.warn('Retry sync error for question', item.questionId, syncErr);
+          }
+        }
+      }
+      if (syncedCount > 0) {
+        toast.success(`Synchronized ${syncedCount} buffered answer(s) to server.`);
+      }
+    } catch (e) {
+      console.warn('Flush buffered answers failed:', e);
+    }
+  };
+
   useEffect(() => {
     initializeSession();
 
     const handleOnline = () => {
       setIsOnline(true);
       toast.success('Internet connection restored.');
+      flushBufferedAnswers();
     };
     const handleOffline = () => {
       setIsOnline(false);
@@ -71,7 +104,6 @@ export default function InterviewRoomPage() {
     };
   }, [sessionId]);
 
-
   // When question changes, speak question if TTS enabled
   useEffect(() => {
     if (questions.length > 0 && ttsEnabled) {
@@ -85,91 +117,98 @@ export default function InterviewRoomPage() {
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
 
-    timerRef.current = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          // Auto advance on timeout
-          handleNextQuestion();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (questions.length > 0 && !connectionError) {
+      timerRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            // Auto advance on timeout
+            handleNextQuestion();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
 
     return () => clearInterval(timerRef.current);
-  }, [currentIndex]);
+  }, [currentIndex, questions, connectionError]);
 
   const initializeSession = async () => {
+    setConnectionError(null);
     try {
-      // Initialize webcam
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-        audio: true,
-      });
-      mediaStreamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-
-      // Fetch session and start
+      // 1. Hardware access
+      let stream = null;
       try {
-        await interviewApi.startSession(sessionId);
-        const res = await interviewApi.getSession(sessionId);
-        if (res.data?.questions && res.data.questions.length > 0) {
-          const formatted = res.data.questions.map((q) => ({
-            id: q.id,
-            text: q.question_text || q.text,
-            source: q.source,
-            time_limit_seconds: q.time_limit_seconds || 120,
-          }));
-          setQuestions(formatted);
-        } else {
-          loadFallbackQuestions();
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720 },
+          audio: true,
+        });
+        mediaStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
         }
-      } catch (err) {
-        loadFallbackQuestions();
+      } catch (mediaErr) {
+        console.warn('Camera/mic access warning:', mediaErr);
       }
 
-      startRecording(stream);
+      // 2. Fetch session and questions from server
+      await interviewApi.startSession(sessionId);
+      const res = await interviewApi.getSession(sessionId);
+
+      if (res.data?.questions && res.data.questions.length > 0) {
+        const formatted = res.data.questions.map((q) => ({
+          id: q.id,
+          text: q.question_text || q.text,
+          source: q.source,
+          time_limit_seconds: q.time_limit_seconds || 120,
+        }));
+        setQuestions(formatted);
+        setConnectionError(null);
+        if (stream) {
+          startRecording(stream);
+        }
+      } else {
+        // No hardcoded offline questions allowed per proposal
+        setConnectionError('No questions found for this session on the server. Offline use is not supported.');
+      }
     } catch (err) {
-      console.warn('Camera/mic access error:', err);
-      loadFallbackQuestions();
+      console.error('Session initialization error:', err);
+      setConnectionError(
+        'Connection to interview server lost. Offline interview mode is not supported by the system. Please verify your connection and retry.'
+      );
     }
   };
 
-  const loadFallbackQuestions = () => {
-    setQuestions([
-      {
-        id: 'q1',
-        text: 'Tell me about yourself, your technical background, and what makes you passionate about software engineering.',
-        source: 'bank',
-        time_limit_seconds: 120,
-      },
-      {
-        id: 'q2',
-        text: 'What is the difference between synchronous and asynchronous operations, and how do you handle blocking tasks in modern backends?',
-        source: 'bank',
-        time_limit_seconds: 120,
-      },
-      {
-        id: 'q3',
-        text: 'Describe a challenging bug or outage you resolved recently. Walk through your diagnostic steps using the STAR method.',
-        source: 'bank',
-        time_limit_seconds: 150,
-      },
-      {
-        id: 'q4',
-        text: 'How do you design scalable REST APIs, and what strategies do you implement to ensure backward compatibility and rate limiting?',
-        source: 'bank',
-        time_limit_seconds: 120,
-      },
-    ]);
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    await initializeSession();
+    setIsRetrying(false);
+  };
+
+  const getSupportedMimeType = () => {
+    const candidates = [
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp9,opus',
+      'video/webm',
+      'video/mp4;codecs=avc1,mp4a.40.2',
+      'video/mp4',
+    ];
+    if (typeof window !== 'undefined' && window.MediaRecorder && typeof MediaRecorder.isTypeSupported === 'function') {
+      for (const t of candidates) {
+        if (MediaRecorder.isTypeSupported(t)) {
+          return t;
+        }
+      }
+    }
+    return '';
   };
 
   const startRecording = (stream) => {
     try {
       recordedChunksRef.current = [];
-      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+      const mime = getSupportedMimeType();
+      const options = mime ? { mimeType: mime } : undefined;
+      const recorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -181,7 +220,7 @@ export default function InterviewRoomPage() {
       recorder.start(1000); // 1s slice
       setIsRecording(true);
     } catch (err) {
-      console.warn('MediaRecorder VP8 codec not supported, falling back to default:', err);
+      console.warn('MediaRecorder preferred codec error, falling back to default:', err);
       try {
         const recorder = new MediaRecorder(stream);
         mediaRecorderRef.current = recorder;
@@ -191,7 +230,7 @@ export default function InterviewRoomPage() {
         recorder.start(1000);
         setIsRecording(true);
       } catch (e) {
-        console.warn('MediaRecorder error:', e);
+        console.warn('MediaRecorder default fallback error:', e);
       }
     }
   };
@@ -226,7 +265,9 @@ export default function InterviewRoomPage() {
     try {
       await interviewApi.submitAnswer(sessionId, currentQ.id, formData);
     } catch (err) {
-      console.log('Recorded answer saved locally (offline-tolerant).');
+      console.warn('Direct answer upload failed; buffering to IndexedDB:', err);
+      await bufferFailedAnswer(sessionId, currentQ.id, blob);
+      toast.warning('Network drop detected: answer video safely buffered in local storage for auto-retry.');
     }
   };
 
@@ -292,6 +333,51 @@ export default function InterviewRoomPage() {
     }
   };
 
+  // Connection Error / Offline Screen
+  if (connectionError) {
+    return (
+      <div className="fixed inset-0 z-50 bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500">
+            <WifiOff className="w-8 h-8" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-white mb-2">Connection Lost</h2>
+          <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+            {connectionError}
+          </p>
+
+          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 mb-6 text-xs text-slate-400 text-left">
+            <span className="font-semibold text-slate-300 block mb-1">Why is this required?</span>
+            The AI Mock Interview engine requires real-time cloud synchronization for question evaluation and media streaming. Offline mock interviews are not supported.
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => navigate('/dashboard')}
+              icon={Home}
+              className="w-full justify-center border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              Back to Dashboard
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleRetry}
+              isLoading={isRetrying}
+              icon={RefreshCw}
+              className="w-full justify-center font-bold"
+            >
+              Retry Connection
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const currentQuestion = questions[currentIndex];
   const progressPercent = Math.round(((currentIndex + 1) / (questions.length || 1)) * 100);
 
@@ -306,13 +392,12 @@ export default function InterviewRoomPage() {
       {!isOnline && (
         <div className="bg-amber-600/90 text-white text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-lg z-50">
           <AlertTriangle className="w-4 h-4 animate-bounce" />
-          <span>Network connection lost. All video chunks are safely buffered locally and will synchronize once reconnected.</span>
+          <span>Network connection lost. All video chunks are safely buffered locally in IndexedDB and will synchronize once reconnected.</span>
         </div>
       )}
 
       {/* Top HUD Bar */}
       <header className="h-16 px-6 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between">
-
         <div className="flex items-center gap-4">
           <Badge variant="primary" size="md">
             Question {currentIndex + 1} of {questions.length}
