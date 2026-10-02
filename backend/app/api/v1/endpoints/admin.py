@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
 from app.core.config import settings
-from app.core.deps import require_role
+from app.core.deps import require_role, get_current_user
 from app.db.session import get_db
 from app.db.models.user import User, LoginHistory
 from app.db.models.interview import (
@@ -18,6 +18,7 @@ from app.db.models.interview import (
     InterviewCategory,
     DifficultyLevel,
     Question,
+    QuestionSet,
     InterviewSession
 )
 from app.db.models.report import Report
@@ -376,10 +377,24 @@ def delete_question(question_id: str, db: Session = Depends(get_db)):
 
 @router.post("/questions/bulk-upload")
 @router.post("/questions/upload-set")
-async def bulk_upload_questions(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def bulk_upload_questions(
+    file: UploadFile = File(...),
+    set_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     contents = await file.read()
     filename = file.filename.lower()
     created_count = 0
+
+    # Derive or sanitize QuestionSet name
+    custom_name = set_name.strip() if set_name and set_name.strip() else os.path.splitext(file.filename)[0].replace("_", " ").replace("-", " ").title()
+    q_set = QuestionSet(
+        name=custom_name,
+        uploaded_by=current_user.id if current_user else None
+    )
+    db.add(q_set)
+    db.flush()
 
     roles_map = {r.name.lower(): r.id for r in db.query(JobRole).all()}
     cats_map = {c.name.lower(): c.id for c in db.query(InterviewCategory).all()}
@@ -416,7 +431,9 @@ async def bulk_upload_questions(file: UploadFile = File(...), db: Session = Depe
                 difficulty_id=d_id,
                 expected_keywords=kw,
                 sample_answer=item.get("sample_answer", ""),
-                is_active=True
+                is_active=True,
+                created_by=current_user.id if current_user else None,
+                question_set_id=q_set.id
             )
             db.add(q)
             created_count += 1
@@ -445,13 +462,47 @@ async def bulk_upload_questions(file: UploadFile = File(...), db: Session = Depe
                 difficulty_id=d_id,
                 expected_keywords=kw,
                 sample_answer=row.get("sample_answer", ""),
-                is_active=True
+                is_active=True,
+                created_by=current_user.id if current_user else None,
+                question_set_id=q_set.id
             )
             db.add(q)
             created_count += 1
 
     db.commit()
-    return {"message": f"Successfully imported {created_count} questions", "count": created_count}
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="admin_question_set_upload",
+        entity="question_set",
+        entity_id=q_set.id,
+        user_id=current_user.id if current_user else None,
+        metadata_info={"name": q_set.name, "count": created_count, "filename": file.filename}
+    )
+
+    return {
+        "message": f"Successfully imported {created_count} questions into question set '{q_set.name}'",
+        "count": created_count,
+        "question_set_id": q_set.id,
+        "set_name": q_set.name
+    }
+
+
+@router.get("/questions/sets")
+def get_question_sets(db: Session = Depends(get_db)):
+    """List all custom uploaded question sets and their question counts."""
+    sets = db.query(QuestionSet).order_by(desc(QuestionSet.created_at)).all()
+    return [
+        {
+            "id": s.id,
+            "name": s.name,
+            "uploaded_by": s.uploaded_by,
+            "question_count": len(s.questions),
+            "created_at": s.created_at.strftime("%Y-%m-%d %H:%M:%S") if s.created_at else ""
+        }
+        for s in sets
+    ]
 
 # -------------------------------------------------------------
 # 4. Metadata Taxonomy (Roles, Categories, Difficulties)
