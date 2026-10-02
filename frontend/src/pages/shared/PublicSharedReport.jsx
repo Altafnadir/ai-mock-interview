@@ -6,6 +6,7 @@ import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
+import Logo from '../../components/common/Logo';
 
 export default function PublicSharedReport() {
   const { token } = useParams();
@@ -56,7 +57,8 @@ export default function PublicSharedReport() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 flex flex-col items-center justify-center">
       <div className="max-w-3xl w-full space-y-6">
         {/* Verification Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3 flex flex-col items-center">
+          <Logo variant="full" size="md" to="/" className="mb-2" />
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
             <Shield className="w-3.5 h-3.5" />
             Verified AI Performance Credential &bull; PMAS-AAUR

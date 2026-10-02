@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 200" fill="none">
+  <defs>
+    <linearGradient id="fullPrim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B32C8" />
+      <stop offset="60%" stop-color="#1858E8" />
+      <stop offset="100%" stop-color="#0BB0E8" />
+    </linearGradient>
+    <linearGradient id="fullCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0BB0E8" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(10, 15) scale(0.33)">
+    <!-- Head Profile -->
+    <path d="M 224 40 C 130 40 50 115 50 215 C 50 260 65 295 85 330 L 85 410 C 85 425 95 435 110 435 L 180 435 C 190 435 198 425 198 410 L 198 385 C 220 395 242 395 260 385 C 275 365 285 340 285 315 C 295 310 305 300 305 285 C 305 272 295 265 285 260 C 295 240 310 220 310 190 C 310 105 280 40 224 40 Z" fill="none" stroke="url(#fullPrim)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="190" cy="180" r="70" fill="none" stroke="url(#fullPrim)" stroke-width="18" stroke-dasharray="85 25"/>
+    <circle cx="190" cy="180" r="42" fill="none" stroke="url(#fullPrim)" stroke-width="16"/>
+    <circle cx="190" cy="180" r="22" fill="url(#fullCyan)"/>
+    <circle cx="200" cy="172" r="7" fill="#FFFFFF"/>
+    <path d="M 330 250 A 40 40 0 0 1 330 310" fill="none" stroke="url(#fullCyan)" stroke-width="18" stroke-linecap="round"/>
+    <path d="M 360 230 A 70 70 0 0 1 360 330" fill="none" stroke="url(#fullCyan)" stroke-width="18" stroke-linecap="round"/>
+    <path d="M 390 210 A 100 100 0 0 1 390 350" fill="none" stroke="url(#fullCyan)" stroke-width="18" stroke-linecap="round"/>
+  </g>
+  <text x="180" y="90" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="54" fill="#0F172A">Mock Interview</text>
+  <rect x="585" y="44" width="76" height="54" rx="12" fill="#1858E8" />
+  <text x="602" y="85" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="38" fill="#FFFFFF">AI</text>
+  <text x="182" y="132" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="22" fill="#64748B">Practice. Analyze. Get Hired.</text>
+</svg>

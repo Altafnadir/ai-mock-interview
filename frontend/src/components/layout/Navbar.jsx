@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import Logo from '../common/Logo';
 import {
   Sun,
   Moon,
@@ -29,19 +30,13 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand / Logo */}
         <div className="flex items-center gap-3">
-          <Link to={user?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-primary-500/20">
-              <Video className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-primary-600 to-indigo-500 dark:from-primary-400 dark:to-indigo-300 bg-clip-text text-transparent">
-                AI Interview Prep
-              </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold px-2 py-0.5 rounded bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-                GIMS-BSSE-F202206
-              </span>
-            </div>
-          </Link>
+          <Logo
+            to={user?.role === 'admin' ? '/admin' : '/dashboard'}
+            variant="full"
+            size="md"
+            responsive={true}
+            badge={user?.role === 'admin' ? 'Admin' : null}
+          />
         </div>
 
         {/* Right Nav Actions */}

@@ -1,0 +1,100 @@
+<div align="center">
+  <img src="frontend/public/brand/logo-icon.png" alt="Mock Interview AI" width="160" />
+  <h1>Mock Interview AI</h1>
+  <p><strong>Practice. Analyze. Get Hired.</strong></p>
+  <p>An enterprise-grade, multi-modal artificial intelligence platform for technical, behavioral, and HR mock interviews with real-time audio/visual tracking, instant rubric scoring, and comprehensive PDF analytics.</p>
+
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11" />
+    <img src="https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black" alt="React 18" />
+    <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite&logoColor=white" alt="Vite" />
+    <img src="https://img.shields.io/badge/PostgreSQL-18-4169E1?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?style=flat&logo=tailwindcss&logoColor=white" alt="TailwindCSS" />
+    <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat" alt="MIT License" />
+  </p>
+</div>
+
+---
+
+## 🎯 System Highlights
+
+- **Multi-Modal AI Pipeline**: Real-time evaluation across **7 distinct dimensions** — Technical depth, Speech clarity, Eye contact engagement, Posture & body language, Voice pace/WPM, Emotional sentiment, and Grammar syntax.
+- **Adaptive Question Engine**: Dynamic question generation tailored to the candidate's resume, selected seniority, and domain (Full Stack, Backend, Frontend, DevOps, ML/AI, QA, Mobile, Cloud, Cybersecurity).
+- **Comprehensive PDF Reports**: Generates multi-page official ReportLab evaluation dossiers, 1-page executive summaries, and dark-mode performance posters.
+- **Enterprise Security & Auth**: JWT authentication, argon2/bcrypt hashing, OTP email verification, per-IP rate limiting, and role-based access control (Admin / Candidate).
+- **Modern Responsive UI**: Built with React 18, Tailwind CSS, Lucide icons, glassmorphism aesthetics, and system-wide Dark/Light mode theme switching.
+
+---
+
+## 🎨 Visual Identity & Brand System
+
+- **Brand Name**: Mock Interview AI
+- **Tagline**: Practice. Analyze. Get Hired.
+- **Primary Color**: `#1858E8` (Royal Blue)
+- **Primary Dark**: `#3B32C8` (Cognitive Indigo)
+- **Accent Color**: `#0BB0E8` (Electric Cyan)
+- Detailed brand assets and usage guidelines can be found in [docs/BRANDING.md](docs/BRANDING.md).
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+ & npm
+- PostgreSQL 14+ (or bundled local cluster)
+
+### 1. Backend Setup
+```bash
+# Clone the repository
+git clone https://github.com/Altafnadir/ai-mock-interview.git
+cd ai-mock-interview
+
+# Setup Python virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r backend/requirements.txt
+
+# Configure environment variables
+cp .env.example .env
+
+# Run database migrations and seed default data
+alembic upgrade head
+python -m app.scripts.seed_demo
+python -m app.scripts.seed_resources
+
+# Start the FastAPI backend
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Visit `http://localhost:5173` to access the application.
+
+---
+
+## 🧪 Testing Suite
+
+### Backend Test Suite
+```bash
+pytest backend/tests -v
+```
+
+### Frontend Vitest Suite
+```bash
+cd frontend
+npm run test:run
+```
+
+---
+
+## 📄 License
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

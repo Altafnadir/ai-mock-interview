@@ -8,7 +8,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table,
-    TableStyle, KeepTogether, HRFlowable
+    TableStyle, KeepTogether, HRFlowable, Image as RLImage
 )
 
 from app.core.config import settings
@@ -24,6 +24,17 @@ class PDFReportBuilder:
         reports_dir = Path(settings.STORAGE_DIR) / "reports"
         reports_dir.mkdir(parents=True, exist_ok=True)
         return reports_dir
+
+    def _get_logo_path(self) -> Optional[str]:
+        candidates = [
+            os.path.join(os.path.dirname(__file__), "assets", "logo-icon.png"),
+            os.path.abspath(r"d:\ai-mock-interview\frontend\public\brand\logo-icon.png"),
+            os.path.abspath(r"d:\ai-mock-interview\assets\logo-original.png"),
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                return c
+        return None
 
     def build_report_pdf(
         self,
@@ -59,7 +70,11 @@ class PDFReportBuilder:
 
         styles = getSampleStyleSheet()
 
-        primary_color = colors.HexColor("#0284c7")  # Sky/Primary 600
+        styles = getSampleStyleSheet()
+
+        primary_color = colors.HexColor("#1858e8")  # Brand Royal Blue
+        dark_indigo = colors.HexColor("#3b32c8")    # Brand Dark Indigo
+        accent_cyan = colors.HexColor("#0bb0e8")    # Brand Accent Cyan
         dark_slate = colors.HexColor("#0f172a")     # Slate 900
         muted_slate = colors.HexColor("#475569")    # Slate 600
         card_bg = colors.HexColor("#f8fafc")        # Slate 50
@@ -68,7 +83,7 @@ class PDFReportBuilder:
 
         title_style = ParagraphStyle(
             "DocTitle", parent=styles["Normal"],
-            fontName="Helvetica-Bold", fontSize=20, leading=24, textColor=dark_slate
+            fontName="Helvetica-Bold", fontSize=18, leading=22, textColor=dark_slate
         )
         subtitle_style = ParagraphStyle(
             "DocSubtitle", parent=styles["Normal"],
@@ -86,23 +101,32 @@ class PDFReportBuilder:
 
         story = []
 
-        # 1. Header
-        header_table = Table([
-            [
-                Paragraph("<b>AI Mock Interview Preparation System</b><br/><font size='8' color='#64748b'>Gujrat Institute of Management Sciences (PMAS-AAUR)</font>", title_style),
+        # 1. Header with Embedded Brand Logo
+        logo_path = self._get_logo_path()
+        if logo_path:
+            header_row = [
+                RLImage(logo_path, width=44, height=44),
+                Paragraph("<b>Mock Interview AI</b><br/><font size='9' color='#1858e8'><b>Candidate Performance Evaluation Report</b></font><br/><font size='8' color='#64748b'>Gujrat Institute of Management Sciences (PMAS-AAUR)</font>", title_style),
                 Paragraph(f"<b>Session ID:</b> {session_id[:8]}<br/><b>Date:</b> {date_str}", subtitle_style)
             ]
-        ], colWidths=[380, 150])
+            header_table = Table([header_row], colWidths=[52, 330, 148])
+        else:
+            header_row = [
+                Paragraph("<b>Mock Interview AI</b><br/><font size='9' color='#1858e8'><b>Candidate Performance Evaluation Report</b></font><br/><font size='8' color='#64748b'>Gujrat Institute of Management Sciences (PMAS-AAUR)</font>", title_style),
+                Paragraph(f"<b>Session ID:</b> {session_id[:8]}<br/><b>Date:</b> {date_str}", subtitle_style)
+            ]
+            header_table = Table([header_row], colWidths=[380, 150])
+
         header_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
         ]))
         story.append(header_table)
         story.append(HRFlowable(width="100%", thickness=1.5, color=primary_color, spaceBefore=8, spaceAfter=12))
 
         # 2. Candidate Overview & Overall Score Box
         score_box = Table([
-            [Paragraph(f"<font size='26' color='#0284c7'><b>{overall_score:.1f}%</b></font><br/><b>Overall Score</b>", ParagraphStyle('Score', alignment=1)),
+            [Paragraph(f"<font size='26' color='#1858e8'><b>{overall_score:.1f}%</b></font><br/><b>Overall Score</b>", ParagraphStyle('Score', alignment=1)),
              Paragraph(f"<b>Candidate:</b> {candidate_name}<br/><b>Email:</b> {candidate_email}<br/><b>Target Role:</b> {job_role}<br/><b>Category:</b> {category} ({difficulty})<br/><b>Hiring Verdict:</b> <font color='#10b981'><b>{final_verdict}</b></font>", body_style)]
         ], colWidths=[150, 380])
         score_box.setStyle(TableStyle([
@@ -258,13 +282,13 @@ class PDFReportBuilder:
 
         styles = getSampleStyleSheet()
         dark_slate = colors.HexColor("#0f172a")
-        primary_color = colors.HexColor("#0284c7")
+        primary_color = colors.HexColor("#1858e8")
         card_bg = colors.HexColor("#f8fafc")
         border_color = colors.HexColor("#e2e8f0")
 
         title_style = ParagraphStyle(
             "SummaryTitle", parent=styles["Normal"],
-            fontName="Helvetica-Bold", fontSize=18, leading=22, textColor=dark_slate
+            fontName="Helvetica-Bold", fontSize=16, leading=20, textColor=dark_slate
         )
         body_style = ParagraphStyle(
             "SummaryBody", parent=styles["Normal"],
@@ -278,18 +302,31 @@ class PDFReportBuilder:
 
         story = []
 
-        # Header
-        header = Table([
-            [Paragraph("<b>AI Mock Interview - Executive Performance Summary</b>", title_style),
-             Paragraph(f"<b>Date:</b> {date_str}<br/><b>Target:</b> {job_role}", body_style)]
-        ], colWidths=[380, 160])
+        # Header with Logo
+        logo_path = self._get_logo_path()
+        if logo_path:
+            header = Table([
+                [RLImage(logo_path, width=38, height=38),
+                 Paragraph("<b>Mock Interview AI &bull; Executive Performance Summary</b>", title_style),
+                 Paragraph(f"<b>Date:</b> {date_str}<br/><b>Target:</b> {job_role}", body_style)]
+            ], colWidths=[46, 340, 154])
+        else:
+            header = Table([
+                [Paragraph("<b>Mock Interview AI &bull; Executive Performance Summary</b>", title_style),
+                 Paragraph(f"<b>Date:</b> {date_str}<br/><b>Target:</b> {job_role}", body_style)]
+            ], colWidths=[380, 160])
+
+        header.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
+        ]))
         story.append(header)
-        story.append(HRFlowable(width="100%", thickness=1, color=primary_color, spaceBefore=6, spaceAfter=10))
+        story.append(HRFlowable(width="100%", thickness=1.5, color=primary_color, spaceBefore=6, spaceAfter=10))
 
         # Hero Banner
         hero = Table([
             [
-                Paragraph(f"<font size='28' color='#0284c7'><b>{overall_score:.1f}%</b></font><br/><b>Overall Readiness</b>", ParagraphStyle('H1', alignment=1)),
+                Paragraph(f"<font size='28' color='#1858e8'><b>{overall_score:.1f}%</b></font><br/><b>Overall Readiness</b>", ParagraphStyle('H1', alignment=1)),
                 Paragraph(f"<b>Candidate:</b> {candidate_name}<br/><b>Role Evaluated:</b> {job_role}<br/><b>Verdict Band:</b> <font color='#10b981'><b>{final_verdict}</b></font><br/><b>Session Reference:</b> {session_id[:8]}", body_style)
             ]
         ], colWidths=[150, 390])
@@ -412,17 +449,19 @@ class PDFReportBuilder:
             fontName="Helvetica", fontSize=9.5, leading=14, textColor=colors.HexColor("#e2e8f0")
         )
 
-        story = []
+        # Dark theme poster container with brand logo
+        logo_path = self._get_logo_path()
+        logo_element = [RLImage(logo_path, width=52, height=52), Spacer(1, 8)] if logo_path else []
 
-        # Dark theme poster container
         poster_content = [
-            Paragraph("AI INTERVIEW PERFORMANCE POSTER", poster_title),
+            *logo_element,
+            Paragraph("MOCK INTERVIEW AI &bull; PERFORMANCE POSTER", poster_title),
             Spacer(1, 4),
             Paragraph(f"Official Candidate Evaluation &bull; {job_role}", poster_sub),
-            Spacer(1, 16),
-            Paragraph(f"<font size='48' color='#38bdf8'><b>{overall_score:.1f}%</b></font>", ParagraphStyle('PBig', alignment=1)),
+            Spacer(1, 14),
+            Paragraph(f"<font size='48' color='#0bb0e8'><b>{overall_score:.1f}%</b></font>", ParagraphStyle('PBig', alignment=1)),
             Paragraph(f"OVERALL READINESS SCORE &bull; <b>{final_verdict.upper()}</b>", badge_style),
-            Spacer(1, 16),
+            Spacer(1, 14),
         ]
 
         # 6 Competency bars
@@ -463,14 +502,13 @@ class PDFReportBuilder:
         poster_table = Table([[item] for item in poster_content], colWidths=[540])
         poster_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#090d16")),
-            ('BOX', (0, 0), (-1, -1), 2, colors.HexColor("#0284c7")),
+            ('BOX', (0, 0), (-1, -1), 2, colors.HexColor("#1858e8")),
             ('TOPPADDING', (0, 0), (-1, -1), 20),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
             ('LEFTPADDING', (0, 0), (-1, -1), 20),
             ('RIGHTPADDING', (0, 0), (-1, -1), 20),
         ]))
-        story.append(poster_table)
-
+        story = [poster_table]
         doc.build(story)
         relative_path = f"{settings.STORAGE_DIR}/reports/{pdf_filename}".replace("\\", "/")
         return relative_path

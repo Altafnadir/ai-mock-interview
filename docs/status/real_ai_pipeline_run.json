@@ -1,0 +1,144 @@
+[
+  {
+    "id": 1,
+    "name": "Media Normalizer",
+    "library": "FFmpeg 7.1 Static Binary",
+    "used_fallback": false,
+    "runtime_seconds": 6.269,
+    "key_outputs": {
+      "norm_audio": "real_60s_sample_normalized_16k.wav",
+      "norm_video": "real_60s_sample_normalized.mp4"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Speech to Text (STT)",
+    "library": "Direct Candidate Transcript Input",
+    "used_fallback": false,
+    "runtime_seconds": 0.0,
+    "key_outputs": {
+      "word_count": 13,
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": 3,
+    "name": "Voice Acoustic Analyzer",
+    "library": "soundfile & numpy DSP (Autocorrelation & RMS)",
+    "used_fallback": false,
+    "runtime_seconds": 0.094,
+    "key_outputs": {
+      "pitch_mean": 219.2,
+      "volume_consistency": 89.2,
+      "pauses": 0
+    }
+  },
+  {
+    "id": 4,
+    "name": "Vision Engagement Analyzer",
+    "library": "OpenCV (cv2) Video Analysis",
+    "used_fallback": false,
+    "runtime_seconds": 1.145,
+    "key_outputs": {
+      "eye_contact_pct": 100.0,
+      "posture_score": 78.4
+    }
+  },
+  {
+    "id": 5,
+    "name": "Emotion Demeanor Analyzer",
+    "library": "OpenCV (cv2) Affective Demeanor Analyzer",
+    "used_fallback": false,
+    "runtime_seconds": 1.023,
+    "key_outputs": {
+      "confidence_score": 65.0,
+      "dominant_emotion": "neutral",
+      "smile_pct": 11.1
+    }
+  },
+  {
+    "id": 6,
+    "name": "Filler Word Detector",
+    "library": "Regex Lexical Disfluency Engine",
+    "used_fallback": false,
+    "runtime_seconds": 0.005,
+    "key_outputs": {
+      "total_fillers": 0,
+      "fillers_per_minute": 0.0
+    }
+  },
+  {
+    "id": 7,
+    "name": "Grammar & Lexical Analyzer",
+    "library": "Regex & Flesch-Kincaid Lexical Analyzer",
+    "used_fallback": true,
+    "runtime_seconds": 3.033,
+    "key_outputs": {
+      "readability": 30.0,
+      "vocabulary_score": 100.0,
+      "grammar_errors": 0
+    }
+  },
+  {
+    "id": 8,
+    "name": "STAR Content Evaluator",
+    "library": "STAR Rubric & Keyword Matcher",
+    "used_fallback": true,
+    "runtime_seconds": 0.0,
+    "key_outputs": {
+      "technical_accuracy": 60.0,
+      "relevance": 55.0,
+      "keywords_matched": [
+        "PostgreSQL",
+        "FastAPI"
+      ]
+    }
+  },
+  {
+    "id": 9,
+    "name": "Resume Parser",
+    "library": "pdfplumber / python-docx + Heuristic Regex Matcher",
+    "used_fallback": true,
+    "runtime_seconds": 0.005,
+    "key_outputs": {
+      "extracted_skills_count": 4,
+      "weak_sections_count": 4
+    }
+  },
+  {
+    "id": 10,
+    "name": "Question Generator",
+    "library": "Curated Question Bank Fallback",
+    "used_fallback": true,
+    "runtime_seconds": 0.083,
+    "key_outputs": {
+      "questions_generated": 1
+    }
+  },
+  {
+    "id": 11,
+    "name": "Multi-Modal Scoring Engine",
+    "library": "Multi-Modal Weighted Scoring Engine",
+    "used_fallback": false,
+    "runtime_seconds": 0.0,
+    "key_outputs": {
+      "overall_score": 77.5,
+      "verdict": "Good"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Feedback & Recommendations Generator",
+    "library": "Qualitative Feedback & Dynamic Resource Mapper",
+    "used_fallback": false,
+    "runtime_seconds": 0.0,
+    "key_outputs": {
+      "strengths_count": 4,
+      "weak_tags": [
+        "technical",
+        "body_language",
+        "confidence"
+      ]
+    }
+  }
+]

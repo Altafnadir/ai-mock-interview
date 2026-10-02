@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import Logo from '../../components/common/Logo';
 
 export default function OTPVerificationPage() {
   const location = useLocation();
@@ -113,10 +114,8 @@ export default function OTPVerificationPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-primary-950 border border-primary-800/80 flex items-center justify-center text-primary-400 mx-auto mb-4">
-            <KeyRound className="w-6 h-6" />
-          </div>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Logo variant="full" size="md" to="/" className="mb-4" />
           <h2 className="text-2xl font-bold text-white">Verify Your Email</h2>
           <p className="text-xs text-slate-400 mt-2">
             Enter the 6-digit verification code dispatched to:

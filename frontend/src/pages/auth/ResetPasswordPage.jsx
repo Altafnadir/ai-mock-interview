@@ -6,6 +6,7 @@ import { toast } from '../../store/toastStore';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
+import Logo from '../../components/common/Logo';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -52,7 +53,8 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Logo variant="full" size="md" to="/" className="mb-4" />
           <h2 className="text-2xl font-bold text-white">Create New Password</h2>
           <p className="text-xs text-slate-400 mt-2">
             Enter your new secure password below

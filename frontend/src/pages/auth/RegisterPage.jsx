@@ -6,6 +6,7 @@ import { toast } from '../../store/toastStore';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
+import Logo from '../../components/common/Logo';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -54,15 +55,11 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-block">
-            <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-primary-400 to-indigo-300 bg-clip-text text-transparent">
-              AI Mock Interview Prep
-            </span>
-          </Link>
-          <h2 className="text-xl font-bold text-white mt-3">Create Candidate Account</h2>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Logo variant="full" size="lg" to="/" className="mb-2" />
+          <h2 className="text-xl font-bold text-white mt-2">Create Candidate Account</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Join GIMS AI Mock Interview System to start your preparation
+            Join Mock Interview AI to start your personalized preparation
           </p>
         </div>
 

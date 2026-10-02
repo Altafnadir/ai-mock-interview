@@ -7,6 +7,7 @@ import { toast } from '../../store/toastStore';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
+import Logo from '../../components/common/Logo';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -50,10 +51,8 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/10">
-            <Shield className="w-7 h-7" />
-          </div>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Logo variant="full" size="lg" to="/" badge="Admin" className="mb-4" />
           <h2 className="text-2xl font-bold text-white tracking-tight">System Administration</h2>
           <p className="text-xs text-amber-400/80 font-medium uppercase tracking-wider mt-1">
             Authorized Personnel Only

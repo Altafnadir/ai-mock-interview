@@ -14,6 +14,7 @@ import {
   Award,
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import Logo from '../../components/common/Logo';
 
 export default function LandingPage() {
   const FEATURES = [
@@ -56,8 +57,34 @@ export default function LandingPage() {
         <span className="font-semibold text-white">Final Year Project:</span> PMAS-Arid Agriculture University (GIMS) &bull; Project ID: <span className="font-mono font-bold text-amber-400">GIMS-BSSE-F202206</span>
       </div>
 
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <Logo variant="full" size="md" to="/" responsive={true} />
+          
+          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-300">
+            <a href="#features" className="hover:text-primary-400 transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-primary-400 transition-colors">How It Works</a>
+            <Link to="/resources" className="hover:text-primary-400 transition-colors">Resources</Link>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/register">
+              <Button variant="primary" size="sm" className="font-semibold shadow-md shadow-primary-600/20">
+                Get Started Free
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <div className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32">
+      <div className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-32">
         {/* Background glow circles */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/3 left-1/4 w-72 h-72 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
@@ -200,14 +227,15 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-10 bg-slate-950 text-slate-500 text-xs text-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 flex flex-col items-center">
+          <Logo variant="full" size="sm" to="/" />
           <p className="font-semibold text-slate-400">
-            AI-Based Mock Interview Preparation System (Project ID: GIMS-BSSE-F202206)
+            Mock Interview AI &bull; AI-Based Mock Interview Preparation System (Project ID: GIMS-BSSE-F202206)
           </p>
           <p>
             Department of Software Engineering, PMAS-Arid Agriculture University (GIMS), Rawalpindi.
           </p>
-          <div className="pt-4 flex justify-center gap-6 text-slate-400">
+          <div className="pt-2 flex justify-center gap-6 text-slate-400">
             <Link to="/login" className="hover:text-primary-400">Candidate Login</Link>
             <Link to="/register" className="hover:text-primary-400">Register</Link>
             <Link to="/admin/login" className="hover:text-amber-400">Admin Login</Link>
