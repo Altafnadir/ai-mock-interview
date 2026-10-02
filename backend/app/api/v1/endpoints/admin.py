@@ -176,6 +176,16 @@ def update_user(user_id: str, payload: admin_schemas.UserUpdateAdmin, db: Sessio
         
     db.commit()
     db.refresh(user)
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="admin_user_update",
+        entity="user",
+        entity_id=user.id,
+        metadata_info={"email": user.email, "role": user.role, "is_active": user.is_active}
+    )
+
     return user
 
 
@@ -204,8 +214,19 @@ def delete_user(user_id: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    deleted_email = user.email
     db.delete(user)
     db.commit()
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="admin_user_delete",
+        entity="user",
+        entity_id=user_id,
+        metadata_info={"deleted_user_email": deleted_email}
+    )
+
     return {"message": "User deleted successfully", "id": user_id}
 
 # -------------------------------------------------------------
@@ -890,6 +911,15 @@ def update_security_settings(payload: admin_schemas.SecuritySettingsUpdate, db: 
     else:
         setting.value = payload.model_dump()
     db.commit()
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="admin_security_update",
+        entity="system_setting",
+        metadata_info=payload.model_dump()
+    )
+
     return {"message": "Security settings saved", "settings": payload.model_dump()}
 
 
@@ -993,6 +1023,15 @@ def set_maintenance_mode(
         setting.value = val
 
     db.commit()
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="admin_maintenance_update",
+        entity="system_setting",
+        metadata_info=val
+    )
+
     return {"message": "Maintenance setting updated", "maintenance_mode": enabled, "details": val}
 
 

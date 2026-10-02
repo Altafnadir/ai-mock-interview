@@ -1,6 +1,6 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -58,6 +58,33 @@ async def add_security_headers(request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    from fastapi.responses import JSONResponse
+    from app.services.activity_logger import log_error
+    from app.db.session import SessionLocal
+
+    tb = traceback.format_exc()
+    try:
+        with SessionLocal() as db:
+            log_error(
+                db=db,
+                error_type=type(exc).__name__,
+                message=str(exc),
+                endpoint=str(request.url.path),
+                method=request.method,
+                stack_trace=tb
+            )
+    except Exception:
+        pass
+
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}\n{tb}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
 
 
 @app.get("/health", tags=["Health"])

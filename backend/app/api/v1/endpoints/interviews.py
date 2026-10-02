@@ -157,6 +157,17 @@ def start_interview(
 
     db.commit()
     db.refresh(session)
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="interview_start",
+        entity="interview_session",
+        entity_id=session.id,
+        user_id=current_user.id,
+        metadata_info={"job_role_id": session.job_role_id, "difficulty_id": session.difficulty_id}
+    )
+
     return session
 
 @router.get("/{session_id}/current", response_model=Optional[SessionQuestionResponse])
@@ -433,6 +444,16 @@ def end_interview(
     db.add(job)
     db.commit()
     db.refresh(session)
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="interview_end",
+        entity="interview_session",
+        entity_id=session.id,
+        user_id=current_user.id,
+        metadata_info={"duration_seconds": session.duration_seconds}
+    )
 
     # Trigger background pipeline
     background_tasks.add_task(run_pipeline_task, session.id)

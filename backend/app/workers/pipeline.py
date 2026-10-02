@@ -487,6 +487,16 @@ class PipelineWorker:
             self._update_job_step(db, session_id, "done")
             db.commit()
 
+            from app.services.activity_logger import log_activity
+            log_activity(
+                db=db,
+                action="report_generation",
+                entity="report",
+                entity_id=report_entry.id,
+                user_id=session.user_id,
+                metadata_info={"session_id": session.id, "overall_score": calculated_scores["overall_score"], "verdict": calculated_scores["final_verdict"]}
+            )
+
             duration_total = round(time.time() - start_time, 2)
             logger.info(f"AI Pipeline completed successfully for Session {session_id} in {duration_total}s.")
 
@@ -504,6 +514,20 @@ class PipelineWorker:
             logger.error(f"Critical AI Pipeline failure for Session {session_id}: {e}", exc_info=True)
             session.status = "failed"
             session.processing_error = str(e)
+            try:
+                import traceback
+                from app.services.activity_logger import log_error
+                log_error(
+                    db=db,
+                    error_type="PipelineFailure",
+                    message=f"Session {session_id} pipeline failed: {str(e)}",
+                    endpoint=f"/workers/pipeline/{session_id}",
+                    method="WORKER",
+                    stack_trace=traceback.format_exc(),
+                    user_id=session.user_id if session else None
+                )
+            except Exception:
+                pass
             db.commit()
             raise
 

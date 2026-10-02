@@ -92,6 +92,16 @@ def upload_resume(
     db.commit()
     db.refresh(resume)
 
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="resume_upload",
+        entity="resume",
+        entity_id=resume.id,
+        user_id=current_user.id,
+        metadata_info={"filename": resume.filename, "file_size": resume.file_size}
+    )
+
     return resume
 
 @router.get("", response_model=List[ResumeResponse])

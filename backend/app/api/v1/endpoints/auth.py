@@ -46,12 +46,24 @@ router = APIRouter()
 def generate_numeric_otp(length: int = 6) -> str:
     return "".join(random.choices(string.digits, k=length))
 
-def log_login_attempt(db: Session, email: str, request: Request, success: bool):
+def log_login_attempt(db: Session, email: str, request: Request, success: bool, user_id: str = None):
     try:
         ip = request.client.host if request.client else "127.0.0.1"
+        ua = request.headers.get("user-agent", "")
         history = LoginHistory(email=email, ip_address=ip, success=success)
         db.add(history)
         db.commit()
+
+        from app.services.activity_logger import log_activity
+        log_activity(
+            db=db,
+            action="login_success" if success else "login_failed",
+            entity="user",
+            user_id=user_id,
+            ip_address=ip,
+            user_agent=ua,
+            metadata_info={"email": email}
+        )
     except Exception:
         db.rollback()
 
@@ -102,6 +114,15 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
     # Dispatch email
     send_otp_email(to_email=user.email, otp_code=otp, purpose="Registration Verification")
+
+    from app.services.activity_logger import log_activity
+    log_activity(
+        db=db,
+        action="register",
+        entity="user",
+        user_id=user.id,
+        metadata_info={"email": user.email, "full_name": user.full_name}
+    )
 
     return MessageResponse(
         message="Registration successful. Please enter the 6-digit verification code sent to your email.",
@@ -278,7 +299,7 @@ def verify_otp_login(payload: OTPLoginVerifyRequest, request: Request, db: Sessi
     ))
     db.commit()
 
-    log_login_attempt(db, email, request, success=True)
+    log_login_attempt(db, email, request, success=True, user_id=user.id)
 
     return TokenResponse(
         access_token=access_token,
@@ -335,7 +356,7 @@ def login(login_in: UserLogin, request: Request, db: Session = Depends(get_db)):
     ))
     db.commit()
 
-    log_login_attempt(db, email, request, success=True)
+    log_login_attempt(db, email, request, success=True, user_id=user.id)
 
     return TokenResponse(
         access_token=access_token,
