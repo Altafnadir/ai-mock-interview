@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Float, Integer, ForeignKey, Text, JSON
+from sqlalchemy import String, Float, Integer, ForeignKey, Text, JSON, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -24,6 +24,7 @@ class AnalysisVoice(Base):
     avg_pause_duration: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     total_pause_duration: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     voice_stability_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    used_fallback: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     session: Mapped["InterviewSession"] = relationship("InterviewSession", back_populates="voice_analysis")
 
@@ -42,6 +43,7 @@ class AnalysisVision(Base):
     sitting_position_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     frames_analyzed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     timeline: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    used_fallback: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     session: Mapped["InterviewSession"] = relationship("InterviewSession", back_populates="vision_analysis")
 
@@ -54,6 +56,7 @@ class AnalysisEmotion(Base):
     distribution: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)  # happy, confident, nervous, angry, sad, neutral, stress, smile %
     dominant_emotion: Mapped[str] = mapped_column(String(50), default="neutral", nullable=False)
     timeline: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    used_fallback: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     session: Mapped["InterviewSession"] = relationship("InterviewSession", back_populates="emotion_analysis")
 
@@ -71,6 +74,7 @@ class AnalysisGrammar(Base):
     language_quality_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     communication_effectiveness_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     errors: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    used_fallback: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     session: Mapped["InterviewSession"] = relationship("InterviewSession", back_populates="grammar_analysis")
 
@@ -89,5 +93,6 @@ class AnalysisContent(Base):
     matched_keywords: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     logical_flow_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     llm_comment: Mapped[str] = mapped_column(Text, nullable=True)
+    used_fallback: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     session_question: Mapped["SessionQuestion"] = relationship("SessionQuestion", back_populates="content_analysis")

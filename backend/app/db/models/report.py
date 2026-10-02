@@ -30,6 +30,7 @@ class Report(Base):
     pdf_path: Mapped[str] = mapped_column(String(500), nullable=True)
     summary_pdf_path: Mapped[str] = mapped_column(String(500), nullable=True)
     poster_path: Mapped[str] = mapped_column(String(500), nullable=True)
+    used_fallback: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     session: Mapped["InterviewSession"] = relationship("InterviewSession", back_populates="report")

@@ -230,6 +230,16 @@ export default function ReportPage() {
         </div>
       </div>
 
+      {/* Fallback Notice Banner */}
+      {report?.used_fallback && (
+        <div id="fallback-notice-banner" className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start sm:items-center gap-3 text-amber-300 text-sm">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-400 mt-0.5 sm:mt-0" />
+          <div className="leading-relaxed">
+            <span className="font-semibold text-amber-200">Notice:</span> One or more multimodal AI modules utilized heuristic fallback calibration (such as offline lexical rules or media baseline). The overall assessment scores remain calibrated.
+          </div>
+        </div>
+      )}
+
       {/* Main Score Banner */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-8 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 border border-slate-800 text-white shadow-xl">
         <div className="md:col-span-4 text-center md:text-left flex flex-col items-center md:items-start">

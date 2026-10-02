@@ -231,22 +231,24 @@ class ResumeParser:
             ]
         }
 
-        interaction = client.interactions.create(
-            model="gemini-3.8-flash",
-            input=prompt,
-            response_format=[
-                {
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": response_schema
-                }
-            ]
-        )
-
-        output = interaction.output_text
-        if output:
-            data = json.loads(output)
-            return data
+        try:
+            from google.genai import types
+            resp = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=response_schema
+                )
+            )
+            output = resp.text
+            if output:
+                data = json.loads(output)
+                data["used_fallback"] = False
+                data["library"] = "pdfplumber / python-docx + Google Gemini 2.5 Flash"
+                return data
+        except Exception as e:
+            logger.warning(f"Gemini resume parsing error: {e}")
         return None
 
     def _parse_with_heuristics(self, text: str) -> Dict[str, Any]:
@@ -359,6 +361,8 @@ class ResumeParser:
             "extracted_experience": experience,
             "weak_sections": weak_sections,
             "improvement_suggestions": suggestions,
+            "used_fallback": True,
+            "library": "pdfplumber / python-docx + Heuristic Regex Matcher"
         }
 
     def analyze_skills_gap(self, extracted_skills: List[str], target_role_name: str) -> Dict[str, Any]:

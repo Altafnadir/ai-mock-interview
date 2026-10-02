@@ -170,6 +170,7 @@ class PipelineWorker:
                     content_entry.matched_keywords = content_res.get("keywords_matched", [])
                     content_entry.logical_flow_score = round((content_entry.relevance_score + star_avg) / 2.0, 1)
                     content_entry.llm_comment = " ".join(content_res.get("strengths", []) + content_res.get("improvements", []))
+                    content_entry.used_fallback = bool(content_res.get("used_fallback", False))
                 except Exception as e:
                     logger.warning(f"Content evaluation error for question {q.id}: {e}")
                     module_errors.append(f"content_evaluator_{q.id}: {str(e)}")
@@ -206,6 +207,7 @@ class PipelineWorker:
                 voice_entry.avg_pause_duration = voice_res["average_pause_seconds"]
                 voice_entry.total_pause_duration = round(voice_res["pause_count"] * voice_res["average_pause_seconds"], 1)
                 voice_entry.voice_stability_score = voice_res["volume_consistency_score"]
+                voice_entry.used_fallback = bool(voice_res.get("used_fallback", False))
             except Exception as e:
                 logger.warning(f"Voice analyzer error: {e}")
                 module_errors.append(f"voice_analyzer: {str(e)}")
@@ -235,6 +237,7 @@ class PipelineWorker:
                 vision_entry.body_stability_score = vision_res["posture_stability_score"]
                 vision_entry.sitting_position_score = 86.0
                 vision_entry.frames_analyzed = 120
+                vision_entry.used_fallback = bool(vision_res.get("used_fallback", False))
                 vision_entry.timeline = [
                     {"time": "0:00", "eye_contact": True, "posture": "upright"},
                     {"time": "0:30", "eye_contact": True, "posture": "upright"},
@@ -257,7 +260,8 @@ class PipelineWorker:
                     "emotion_analyzer",
                     duration_seconds=session_duration,
                     disfluency_rate=filler_pct,
-                    speaking_rate_wpm=speaking_rate
+                    speaking_rate_wpm=speaking_rate,
+                    video_path=session.video_path
                 )
 
                 emotion_entry = db.query(AnalysisEmotion).filter(AnalysisEmotion.session_id == session.id).first()
@@ -273,6 +277,7 @@ class PipelineWorker:
                     "smiling": emotion_res["smile_percentage"]
                 }
                 emotion_entry.timeline = emotion_res["emotion_timeline"]
+                emotion_entry.used_fallback = bool(emotion_res.get("used_fallback", False))
             except Exception as e:
                 logger.warning(f"Emotion analyzer error: {e}")
                 module_errors.append(f"emotion_analyzer: {str(e)}")
@@ -298,6 +303,7 @@ class PipelineWorker:
                 grammar_entry.language_quality_score = round((gram_score + grammar_res["vocabulary_richness_score"]) / 2.0, 1)
                 grammar_entry.communication_effectiveness_score = round((grammar_res["readability_score"] + gram_score) / 2.0, 1)
                 grammar_entry.errors = grammar_res["error_breakdown"]
+                grammar_entry.used_fallback = bool(grammar_res.get("used_fallback", False))
             except Exception as e:
                 logger.warning(f"Grammar analyzer error: {e}")
                 module_errors.append(f"grammar_analyzer: {str(e)}")
@@ -466,6 +472,13 @@ class PipelineWorker:
                 report_entry.summary_pdf_path = summary_pdf_path
             if poster_path:
                 report_entry.poster_path = poster_path
+
+            report_entry.used_fallback = any([
+                voice_res.get("used_fallback", False) if voice_res else False,
+                vision_res.get("used_fallback", False) if vision_res else False,
+                emotion_res.get("used_fallback", False) if emotion_res else False,
+                grammar_res.get("used_fallback", False) if grammar_res else False,
+            ])
 
             session.status = "analyzed"
             session.processing_error = "; ".join(module_errors) if module_errors else None

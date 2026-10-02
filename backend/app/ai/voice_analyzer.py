@@ -33,94 +33,74 @@ class VoiceAnalyzer:
         return self._estimate_voice_metrics(duration_seconds, word_count)
 
     def _analyze_audio_file(self, file_path: str) -> Optional[Dict[str, Any]]:
-        path = Path(file_path)
-        if path.suffix.lower() == ".wav":
-            try:
-                with wave.open(file_path, "rb") as wf:
-                    n_channels = wf.getnchannels()
-                    sampwidth = wf.getsampwidth()
-                    framerate = wf.getframerate()
-                    n_frames = wf.getnframes()
-                    raw_data = wf.readframes(n_frames)
+        try:
+            import soundfile as sf
+            audio_data, framerate = sf.read(file_path)
+            if audio_data.ndim > 1:
+                audio_data = audio_data[:, 0]
+            total_duration = max(len(audio_data) / float(framerate), 0.5)
 
-                    # Convert to numpy array
-                    if sampwidth == 2:
-                        dtype = np.int16
-                    elif sampwidth == 4:
-                        dtype = np.int32
+            frame_len = int(framerate * 0.05)
+            num_frames = len(audio_data) // frame_len
+
+            if num_frames > 0:
+                frames = audio_data[:num_frames * frame_len].reshape((num_frames, frame_len))
+                energies = np.sqrt(np.mean(frames.astype(np.float64)**2, axis=1))
+
+                mean_energy = float(np.mean(energies))
+                std_energy = float(np.std(energies))
+                vol_consistency = max(min(round(100.0 - (std_energy / (mean_energy + 1e-6) * 50.0), 1), 95.0), 45.0)
+
+                threshold = np.percentile(energies, 20)
+                silent_frames = energies < threshold
+                pauses = []
+                current_pause_len = 0.0
+                for is_silent in silent_frames:
+                    if is_silent:
+                        current_pause_len += 0.05
                     else:
-                        dtype = np.uint8
-
-                    audio_data = np.frombuffer(raw_data, dtype=dtype)
-                    if n_channels > 1:
-                        audio_data = audio_data[::n_channels]  # take first channel
-
-                    total_duration = max(n_frames / float(framerate), 0.5)
-
-                    # Frame-based energy analysis (frame size = 50ms)
-                    frame_len = int(framerate * 0.05)
-                    num_frames = len(audio_data) // frame_len
-
-                    if num_frames > 0:
-                        frames = audio_data[:num_frames * frame_len].reshape((num_frames, frame_len))
-                        energies = np.sqrt(np.mean(frames.astype(np.float64)**2, axis=1))
-
-                        # Volume consistency (coefficient of variation inverted)
-                        mean_energy = float(np.mean(energies))
-                        std_energy = float(np.std(energies))
-                        vol_consistency = max(min(round(100.0 - (std_energy / (mean_energy + 1e-6) * 50.0), 1), 95.0), 45.0)
-
-                        # Pause detection: frames below 15% of median speech energy
-                        threshold = np.percentile(energies, 20)
-                        silent_frames = energies < threshold
-                        pauses = []
-                        current_pause_len = 0
-                        for is_silent in silent_frames:
-                            if is_silent:
-                                current_pause_len += 0.05
-                            else:
-                                if current_pause_len >= 0.5:
-                                    pauses.append(current_pause_len)
-                                current_pause_len = 0
                         if current_pause_len >= 0.5:
                             pauses.append(current_pause_len)
+                        current_pause_len = 0.0
+                if current_pause_len >= 0.5:
+                    pauses.append(current_pause_len)
 
-                        pause_count = len(pauses)
-                        avg_pause = round(float(np.mean(pauses)), 2) if pauses else 0.8
+                pause_count = len(pauses)
+                avg_pause = round(float(np.mean(pauses)), 2) if pauses else 0.8
 
-                        # Pitch estimation via Autocorrelation on speech frames
-                        active_frames = frames[energies >= threshold]
-                        pitches = []
-                        if len(active_frames) > 0:
-                            for aframe in active_frames[::5]:  # sample every 5th frame
-                                corr = np.correlate(aframe, aframe, mode='full')
-                                corr = corr[len(corr)//2:]
-                                # Human pitch search range: 75Hz to 350Hz
-                                min_lag = int(framerate / 350)
-                                max_lag = int(framerate / 75)
-                                if max_lag < len(corr):
-                                    peak_lag = np.argmax(corr[min_lag:max_lag]) + min_lag
-                                    if corr[peak_lag] > 0.3 * corr[0]:
-                                        freq = framerate / float(peak_lag)
-                                        pitches.append(freq)
+                active_frames = frames[energies >= threshold]
+                pitches = []
+                if len(active_frames) > 0:
+                    for aframe in active_frames[::5]:
+                        corr = np.correlate(aframe, aframe, mode='full')
+                        corr = corr[len(corr)//2:]
+                        min_lag = int(framerate / 350)
+                        max_lag = int(framerate / 75)
+                        if max_lag < len(corr):
+                            peak_lag = np.argmax(corr[min_lag:max_lag]) + min_lag
+                            if corr[peak_lag] > 0.3 * corr[0]:
+                                freq = framerate / float(peak_lag)
+                                pitches.append(freq)
 
-                        pitch_mean = round(float(np.mean(pitches)), 1) if pitches else 145.0
-                        pitch_var = round(float(np.var(pitches)), 1) if pitches else 180.0
+                pitch_mean = round(float(np.mean(pitches)), 1) if pitches else 145.0
+                pitch_var = round(float(np.var(pitches)), 1) if pitches else 180.0
+                clarity = round(min(max(vol_consistency * 0.9, 50.0), 92.0), 1)
 
-                        clarity = round(min(max(vol_consistency * 0.9, 50.0), 92.0), 1)
-
-                        return {
-                            "pitch_mean": pitch_mean,
-                            "pitch_variance": pitch_var,
-                            "speaking_rate_wpm": 130.0,
-                            "pause_count": pause_count,
-                            "average_pause_seconds": avg_pause,
-                            "volume_consistency_score": vol_consistency,
-                            "clarity_score": clarity,
-                            "feedback": self._generate_feedback(vol_consistency, pause_count, avg_pause)
-                        }
-            except Exception as e:
-                logger.debug(f"Wav parsing exception: {e}")
+                return {
+                    "pitch_mean": pitch_mean,
+                    "pitch_variance": pitch_var,
+                    "speaking_rate_wpm": 130.0,
+                    "pause_count": pause_count,
+                    "average_pause_seconds": avg_pause,
+                    "volume_consistency_score": vol_consistency,
+                    "clarity_score": clarity,
+                    "feedback": self._generate_feedback(vol_consistency, pause_count, avg_pause),
+                    "used_fallback": False,
+                    "library": "soundfile & numpy DSP (Autocorrelation & RMS)"
+                }
+        except Exception as e:
+            logger.debug(f"Audio DSP analysis exception: {e}")
+            return None
 
         return None
 
@@ -149,7 +129,9 @@ class VoiceAnalyzer:
             "average_pause_seconds": avg_pause,
             "volume_consistency_score": vol_consistency,
             "clarity_score": clarity_score,
-            "feedback": feedback
+            "feedback": feedback,
+            "used_fallback": True,
+            "library": "Heuristic Vocal Cadence Model"
         }
 
     def _generate_feedback(

@@ -41,6 +41,7 @@ class ReportResponse(BaseModel):
     pdf_path: Optional[str] = None
     summary_pdf_path: Optional[str] = None
     poster_path: Optional[str] = None
+    used_fallback: bool = False
     generated_at: datetime
     recommendations: List[RecommendationResponse] = Field(default_factory=list)
 

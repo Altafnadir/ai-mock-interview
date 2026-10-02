@@ -108,22 +108,24 @@ class ContentEvaluator:
             ]
         }
 
-        interaction = client.interactions.create(
-            model="gemini-3.8-flash",
-            input=prompt,
-            response_format=[
-                {
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": response_schema
-                }
-            ]
-        )
-
-        output = interaction.output_text
-        if output:
-            data = json.loads(output)
-            return data
+        try:
+            from google.genai import types
+            resp = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=response_schema
+                )
+            )
+            output = resp.text
+            if output:
+                data = json.loads(output)
+                data["used_fallback"] = False
+                data["library"] = "Google Gemini 2.5 Flash"
+                return data
+        except Exception as e:
+            logger.warning(f"Gemini API call failed: {e}")
         return None
 
     def _evaluate_with_rubric(
@@ -215,7 +217,9 @@ class ContentEvaluator:
             "keywords_matched": matched,
             "keywords_missing": missing,
             "strengths": strengths,
-            "improvements": improvements
+            "improvements": improvements,
+            "used_fallback": True,
+            "library": "STAR Rubric & Keyword Matcher"
         }
 
 content_evaluator = ContentEvaluator()

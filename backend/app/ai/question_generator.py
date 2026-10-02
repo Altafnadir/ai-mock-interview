@@ -97,32 +97,32 @@ class QuestionGenerator:
             "required": ["questions"]
         }
 
-        interaction = client.interactions.create(
-            model="gemini-3.8-flash",
-            input=prompt,
-            response_format=[
-                {
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": response_schema
-                }
-            ]
-        )
-
-        output = interaction.output_text
-        if output:
-            data = json.loads(output)
-            q_list = data.get("questions", [])
-            formatted = []
-            for idx, q in enumerate(q_list):
-                formatted.append({
-                    "order_index": idx + 1,
-                    "question_text": q.get("question_text"),
-                    "source": "ai",
-                    "time_limit_seconds": q.get("time_limit_seconds", 120),
-                    "expected_keywords": q.get("expected_keywords", [])
-                })
-            return formatted
+        try:
+            from google.genai import types
+            resp = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=response_schema
+                )
+            )
+            output = resp.text
+            if output:
+                data = json.loads(output)
+                q_list = data.get("questions", [])
+                formatted = []
+                for idx, q in enumerate(q_list):
+                    formatted.append({
+                        "order_index": idx + 1,
+                        "question_text": q.get("question_text"),
+                        "source": "ai",
+                        "time_limit_seconds": q.get("time_limit_seconds", 120),
+                        "expected_keywords": q.get("expected_keywords", [])
+                    })
+                return formatted
+        except Exception as e:
+            logger.warning(f"Gemini question generation error: {e}")
         return None
 
     def _generate_from_db(

@@ -15,7 +15,11 @@ class MediaNormalizer:
     """
 
     def __init__(self):
-        self._ffmpeg_bin = shutil.which("ffmpeg")
+        try:
+            import imageio_ffmpeg
+            self._ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            self._ffmpeg_bin = shutil.which("ffmpeg")
 
     @property
     def is_ffmpeg_available(self) -> bool:

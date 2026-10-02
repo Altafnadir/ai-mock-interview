@@ -97,11 +97,12 @@ class EmotionAnalyzerPlugin(BaseAIPlugin):
     version = "1.2.0"
     category = "affective"
 
-    def run(self, duration_seconds: float = 60.0, disfluency_rate: float = 2.0, speaking_rate_wpm: float = 135.0) -> Dict[str, Any]:
+    def run(self, duration_seconds: float = 60.0, disfluency_rate: float = 2.0, speaking_rate_wpm: float = 135.0, video_path: Optional[str] = None) -> Dict[str, Any]:
         return emotion_analyzer.analyze(
             duration_seconds=duration_seconds,
             disfluency_rate=disfluency_rate,
-            speaking_rate_wpm=speaking_rate_wpm
+            speaking_rate_wpm=speaking_rate_wpm,
+            video_path=video_path
         )
 
 

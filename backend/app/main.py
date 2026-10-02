@@ -8,6 +8,7 @@ from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.logging import setup_logging, logger
+from app.core.scheduler import start_scheduler, shutdown_scheduler
 from app.db.session import get_db, init_db
 from app.db.models.user import User
 from app.db.models.interview import Question, InterviewSession
@@ -18,9 +19,11 @@ async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("Initializing database tables...")
     init_db()
+    start_scheduler()
     logger.info("Application startup complete.")
     yield
     # Shutdown
+    shutdown_scheduler()
     logger.info("Application shutting down...")
 
 app = FastAPI(
@@ -46,6 +49,15 @@ from app.core.rate_limit import RateLimitMiddleware
 
 app.add_middleware(MaintenanceMiddleware)
 app.add_middleware(RateLimitMiddleware)
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 
 @app.get("/health", tags=["Health"])
@@ -100,6 +112,11 @@ def root():
 # Mount API v1 Routers
 from app.api.v1.api import api_router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+@app.get("/admin/ai-status", tags=["Admin - AI Telemetry"])
+def direct_ai_status():
+    from app.api.v1.endpoints.admin import get_ai_status
+    return get_ai_status()
 
 # Mount Static Storage directory
 from fastapi.staticfiles import StaticFiles
