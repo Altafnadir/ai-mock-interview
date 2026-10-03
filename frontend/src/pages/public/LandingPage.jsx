@@ -96,14 +96,14 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight sm:leading-tight">
-            Ace Your Next Job Interview with{' '}
+            Walk into your next interview with{' '}
             <span className="bg-gradient-to-r from-primary-400 via-indigo-300 to-sky-400 bg-clip-text text-transparent">
-              Real-Time AI Coaching
+              genuine confidence
             </span>
           </h1>
 
           <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Practice customized video interviews tailored to your resume and target job role. Receive instant, multi-dimensional feedback on your speech, eye contact, body language, and technical content.
+            Practice realistic questions tailored to your background, then get clear, supportive feedback on your answers, speaking rhythm, and presence — so you can shine when it counts.
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
