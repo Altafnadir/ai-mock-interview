@@ -43,50 +43,44 @@ export default function Logo({
       {responsive ? (
         <>
           <div className="block md:hidden">
-            <picture>
-              <source srcSet="/brand/logo-icon-dark.png" media="(prefers-color-scheme: dark)" />
-              <img
-                src="/brand/logo-icon.png"
-                alt="Mock Interview AI"
-                width={36}
-                height={36}
-                className="w-9 h-9 object-contain dark:hidden"
-                loading="eager"
-              />
-              <img
-                src="/brand/logo-icon-dark.png"
-                alt="Mock Interview AI"
-                width={36}
-                height={36}
-                className="w-9 h-9 object-contain hidden dark:block"
-                loading="eager"
-              />
-            </picture>
+            <img
+              src="/brand/logo-icon.png"
+              alt="Mock Interview AI"
+              width={36}
+              height={36}
+              className="w-9 h-9 object-contain dark:hidden"
+              loading="eager"
+            />
+            <img
+              src="/brand/logo-icon-dark.png"
+              alt="Mock Interview AI"
+              width={36}
+              height={36}
+              className="w-9 h-9 object-contain hidden dark:block"
+              loading="eager"
+            />
           </div>
           <div className="hidden md:block">
-            <picture>
-              <source srcSet="/brand/logo-full-dark.png" media="(prefers-color-scheme: dark)" />
-              <img
-                src="/brand/logo-full.png"
-                alt="Mock Interview AI"
-                width={dim.w}
-                height={dim.h}
-                className={`${dim.imgClass} object-contain dark:hidden`}
-                loading="eager"
-              />
-              <img
-                src="/brand/logo-full-dark.png"
-                alt="Mock Interview AI"
-                width={dim.w}
-                height={dim.h}
-                className={`${dim.imgClass} object-contain hidden dark:block`}
-                loading="eager"
-              />
-            </picture>
+            <img
+              src="/brand/logo-full.png"
+              alt="Mock Interview AI"
+              width={dim.w}
+              height={dim.h}
+              className={`${dim.imgClass} object-contain dark:hidden`}
+              loading="eager"
+            />
+            <img
+              src="/brand/logo-full-dark.png"
+              alt="Mock Interview AI"
+              width={dim.w}
+              height={dim.h}
+              className={`${dim.imgClass} object-contain hidden dark:block`}
+              loading="eager"
+            />
           </div>
         </>
       ) : variant === 'icon' ? (
-        <picture>
+        <>
           <img
             src="/brand/logo-icon.png"
             alt="Mock Interview AI"
@@ -103,20 +97,18 @@ export default function Logo({
             className={`${dim.imgClass} object-contain hidden dark:block`}
             loading="eager"
           />
-        </picture>
+        </>
       ) : variant === 'stacked' ? (
-        <picture>
-          <img
-            src="/brand/logo-stacked.png"
-            alt="Mock Interview AI"
-            width={dim.w}
-            height={dim.h}
-            className={`${dim.imgClass} object-contain`}
-            loading="eager"
-          />
-        </picture>
+        <img
+          src="/brand/logo-stacked.png"
+          alt="Mock Interview AI"
+          width={dim.w}
+          height={dim.h}
+          className={`${dim.imgClass} object-contain`}
+          loading="eager"
+        />
       ) : (
-        <picture>
+        <>
           <img
             src="/brand/logo-full.png"
             alt="Mock Interview AI"
@@ -133,7 +125,7 @@ export default function Logo({
             className={`${dim.imgClass} object-contain hidden dark:block`}
             loading="eager"
           />
-        </picture>
+        </>
       )}
 
       {badge && (

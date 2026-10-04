@@ -7,6 +7,7 @@ import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import Logo from '../../components/common/Logo';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 
 export default function PublicSharedReport() {
   const { token } = useParams();
@@ -54,21 +55,25 @@ export default function PublicSharedReport() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 flex flex-col items-center justify-center">
+    <div className="min-h-screen relative bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 sm:p-8 flex flex-col items-center justify-center transition-colors">
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeSwitcher />
+      </div>
+
       <div className="max-w-3xl w-full space-y-6">
         {/* Verification Header */}
         <div className="text-center space-y-3 flex flex-col items-center">
           <Logo variant="full" size="md" to="/" className="mb-2" />
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
             <Shield className="w-3.5 h-3.5" />
             Verified AI Performance Credential &bull; PMAS-AAUR
           </div>
-          <h1 className="text-3xl font-extrabold text-white">
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
             Candidate Performance Report
           </h1>
-          <p className="text-sm text-slate-400">
-            Candidate: <span className="text-white font-semibold">{data.candidate_name}</span> &bull; Role:{' '}
-            <span className="text-primary-400 font-semibold">{data.role_name}</span>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Candidate: <span className="text-slate-900 dark:text-white font-semibold">{data.candidate_name}</span> &bull; Role:{' '}
+            <span className="text-primary-600 dark:text-primary-400 font-semibold">{data.role_name}</span>
           </p>
         </div>
 

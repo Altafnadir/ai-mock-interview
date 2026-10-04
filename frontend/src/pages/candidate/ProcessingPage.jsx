@@ -64,21 +64,21 @@ export default function ProcessingPage() {
   }, [sessionId, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <div className="max-w-xl w-full text-center">
         <div className="w-16 h-16 rounded-2xl bg-primary-600/10 border border-primary-500/20 text-primary-400 flex items-center justify-center mx-auto mb-6 shadow-xl">
-          <Sparkles className="w-8 h-8 animate-pulse text-primary-400" />
+          <Sparkles className="w-8 h-8 animate-pulse text-primary-500 dark:text-primary-400" />
         </div>
 
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Analyzing Your Mock Interview
         </h1>
-        <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 max-w-md mx-auto">
           Our multimodal AI engine is currently processing your video and audio recording.
         </p>
 
         {/* Pipeline Step Checklist */}
-        <Card className="mt-8 border-slate-800 bg-slate-900/90 text-left shadow-2xl">
+        <Card className="mt-8 border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 text-left shadow-2xl">
           <div className="space-y-4">
             {PIPELINE_STEPS.map((step, idx) => {
               const isPast = idx < currentStepIndex || isCompleted;

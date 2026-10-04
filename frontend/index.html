@@ -41,13 +41,48 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
-      // Prevent Flash of Unstyled Content (FOUC)
+      // Prevent Flash of Unstyled Content (FOUC) for system, white, black, blue
       (function() {
-        const theme = localStorage.getItem('theme') || 'dark';
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
+        try {
+          const VALID_THEMES = ['system', 'white', 'black', 'blue'];
+          let stored = localStorage.getItem('mock_interview_theme') || localStorage.getItem('theme');
+          if (stored === 'dark') stored = 'system';
+          if (stored === 'light') stored = 'white';
+          const theme = (stored && VALID_THEMES.indexOf(stored) !== -1) ? stored : 'system';
+          
+          let isDark = false;
+          let color = '#FFFFFF';
+          
+          if (theme === 'black') {
+            isDark = true;
+            color = '#000000';
+          } else if (theme === 'blue') {
+            isDark = true;
+            color = '#0B1B3F';
+          } else if (theme === 'white') {
+            isDark = false;
+            color = '#FFFFFF';
+          } else {
+            // system
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            isDark = prefersDark;
+            color = prefersDark ? '#000000' : '#FFFFFF';
+          }
+          
+          const root = document.documentElement;
+          root.setAttribute('data-theme', theme);
+          if (isDark) {
+            root.classList.add('dark');
+            root.style.colorScheme = 'dark';
+          } else {
+            root.classList.remove('dark');
+            root.style.colorScheme = 'light';
+          }
+          
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', color);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'system');
         }
       })();
     </script>

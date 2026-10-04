@@ -30,8 +30,8 @@ const ADMIN_NAV = [
 
 export default function AdminSidebar() {
   return (
-    <aside className="w-64 flex-shrink-0 hidden md:block border-r border-slate-200/80 dark:border-slate-800/80 bg-slate-900/90 text-slate-200 min-h-[calc(100vh-4rem)] p-4">
-      <div className="mb-4 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold flex items-center gap-2">
+    <aside className="w-64 flex-shrink-0 hidden md:block border-r border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 min-h-[calc(100vh-4rem)] p-4">
+      <div className="mb-4 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-2">
         <ShieldAlert className="w-4 h-4" />
         ADMINISTRATION CONSOLE
       </div>
@@ -48,7 +48,7 @@ export default function AdminSidebar() {
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                   isActive
                     ? 'bg-amber-600 text-white shadow-sm font-semibold'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
                 }`
               }
             >

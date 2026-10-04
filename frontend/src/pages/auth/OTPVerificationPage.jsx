@@ -7,6 +7,7 @@ import { toast } from '../../store/toastStore';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Logo from '../../components/common/Logo';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 
 export default function OTPVerificationPage() {
   const location = useLocation();
@@ -112,18 +113,23 @@ export default function OTPVerificationPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Top Right Theme Switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeSwitcher />
+      </div>
+
       <div className="max-w-md w-full">
         <div className="text-center mb-8 flex flex-col items-center">
           <Logo variant="full" size="md" to="/" className="mb-4" />
-          <h2 className="text-2xl font-bold text-white">Verify Your Email</h2>
-          <p className="text-xs text-slate-400 mt-2">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Verify Your Email</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
             Enter the 6-digit verification code dispatched to:
           </p>
-          <div className="mt-1 font-semibold text-primary-400 text-sm">{email || 'your email'}</div>
+          <div className="mt-1 font-semibold text-primary-600 dark:text-primary-400 text-sm">{email || 'your email'}</div>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
           <form onSubmit={handleVerify} className="space-y-6">
             {error && (
               <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium text-center">
@@ -142,7 +148,7 @@ export default function OTPVerificationPage() {
                   value={digit}
                   onChange={(e) => handleDigitChange(idx, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(idx, e)}
-                  className="w-12 h-14 text-center text-xl font-bold rounded-xl bg-slate-950 border border-slate-700 text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-12 h-14 text-center text-xl font-bold rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
                 />
               ))}
             </div>
@@ -160,13 +166,13 @@ export default function OTPVerificationPage() {
           </form>
 
           {/* Resend Section */}
-          <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>Didn't receive the code?</span>
             <button
               type="button"
               disabled={countdown > 0 || resending}
               onClick={handleResend}
-              className="font-semibold text-primary-400 hover:text-primary-300 disabled:opacity-50 flex items-center gap-1"
+              className="font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-500 disabled:opacity-50 flex items-center gap-1"
             >
               <RotateCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
               {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
@@ -175,7 +181,7 @@ export default function OTPVerificationPage() {
         </Card>
 
         <div className="text-center mt-6">
-          <Link to="/login" className="text-xs text-slate-500 hover:text-slate-400">
+          <Link to="/login" className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-400">
             &larr; Back to Sign In
           </Link>
         </div>

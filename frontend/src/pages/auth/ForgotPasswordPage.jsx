@@ -7,6 +7,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
 import Logo from '../../components/common/Logo';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -29,17 +30,22 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Top Right Theme Switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeSwitcher />
+      </div>
+
       <div className="max-w-md w-full">
         <div className="text-center mb-8 flex flex-col items-center">
           <Logo variant="full" size="md" to="/" className="mb-4" />
-          <h2 className="text-2xl font-bold text-white">Reset Password</h2>
-          <p className="text-xs text-slate-400 mt-2">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Reset Password</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
             Enter your registered email address to receive password reset instructions
           </p>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
           {submitted ? (
             <div className="text-center py-6 space-y-4">
               <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto">
@@ -83,10 +89,10 @@ export default function ForgotPasswordPage() {
             </form>
           )}
 
-          <div className="mt-6 pt-6 border-t border-slate-800 text-center">
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
             <Link
               to="/login"
-              className="text-xs text-slate-400 hover:text-slate-200 inline-flex items-center gap-1.5"
+              className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 inline-flex items-center gap-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Sign In

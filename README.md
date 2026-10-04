@@ -23,9 +23,20 @@
 - **Adaptive Question Engine**: Dynamic question generation tailored to the candidate's resume, selected seniority, and domain (Full Stack, Backend, Frontend, DevOps, ML/AI, QA, Mobile, Cloud, Cybersecurity).
 - **Comprehensive PDF Reports**: Generates multi-page official ReportLab evaluation dossiers, 1-page executive summaries, and dark-mode performance posters.
 - **Enterprise Security & Auth**: JWT authentication, argon2/bcrypt hashing, OTP email verification, per-IP rate limiting, and role-based access control (Admin / Candidate).
-- **Modern Responsive UI**: Built with React 18, Tailwind CSS, Lucide icons, glassmorphism aesthetics, and system-wide Dark/Light mode theme switching.
+- **Modern Responsive UI**: Built with React 18, Tailwind CSS, Lucide icons, glassmorphism aesthetics, and system-wide 4-theme switching (System, White, Black, Blue).
 
 ---
+
+## 🌗 Appearance & Theme Options
+
+The platform includes a 4-choice theme engine accessible via the accessible `ThemeSwitcher` dropdown on all pages (Navbar, Auth screens, Candidate layout, and Admin console):
+
+- **System (Default)**: Automatically tracks your device's `prefers-color-scheme` via `matchMedia`. Resolves dynamically to White in light mode and Black in dark mode.
+- **White**: A crisp, distraction-free light theme with `#FFFFFF` / `#F8FAFC` backgrounds, `#E2E8F0` borders, and `#0F172A` high-contrast typography.
+- **Black**: An ultra-deep OLED dark theme with `#000000` / `#0A0A0A` / `#121212` backgrounds, `#27272A` borders, and `#F8FAFC` text.
+- **Blue**: A dark navy executive theme featuring `#0B1B3F` / `#12285C` / `#172554` backgrounds, `#1E3A8A` navy borders, `#E8F0FF` crisp text, and `#3B82F6` vibrant blue accents.
+
+Stored choices persist in `localStorage` under `mock_interview_theme` and an inline pre-render script in `index.html` prevents Flash of Unstyled Content (FOUC). All charts (Recharts), brand logos, and active interview teleprompter overlays adapt dynamically.
 
 ## 🎨 Visual Identity & Brand System
 

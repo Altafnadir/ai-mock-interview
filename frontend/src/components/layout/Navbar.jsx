@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { useThemeStore } from '../../store/themeStore';
 import Logo from '../common/Logo';
+import ThemeSwitcher from '../common/ThemeSwitcher';
 import {
-  Sun,
-  Moon,
   Bell,
   User as UserIcon,
   LogOut,
@@ -16,7 +14,6 @@ import {
 
 export default function Navbar() {
   const { user, logout } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -41,14 +38,8 @@ export default function Navbar() {
 
         {/* Right Nav Actions */}
         <div className="flex items-center gap-3">
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
-            title="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
+          {/* Theme Switcher */}
+          <ThemeSwitcher />
 
           {/* Notifications link if candidate */}
           {user && user.role !== 'admin' && (

@@ -8,6 +8,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
 import Logo from '../../components/common/Logo';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -49,17 +50,22 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Top Right Theme Switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeSwitcher />
+      </div>
+
       <div className="max-w-md w-full">
         <div className="text-center mb-8 flex flex-col items-center">
           <Logo variant="full" size="lg" to="/" badge="Admin" className="mb-4" />
-          <h2 className="text-2xl font-bold text-white tracking-tight">System Administration</h2>
-          <p className="text-xs text-amber-400/80 font-medium uppercase tracking-wider mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">System Administration</h2>
+          <p className="text-xs text-amber-600 dark:text-amber-400 font-medium uppercase tracking-wider mt-1">
             Authorized Personnel Only
           </p>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
@@ -104,17 +110,17 @@ export default function AdminLoginPage() {
               <button
                 type="button"
                 onClick={handleDemoAdminFill}
-                className="w-full py-2 px-3 rounded-lg bg-amber-950/40 border border-amber-800/40 hover:bg-amber-900/30 text-amber-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full py-2 px-3 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 Fill Seeded Admin Credentials
               </button>
             </div>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
             Candidate looking for interview practice?{' '}
-            <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium">
+            <Link to="/login" className="text-primary-600 dark:text-primary-400 hover:text-primary-500 font-medium">
               Candidate Login &rarr;
             </Link>
           </div>

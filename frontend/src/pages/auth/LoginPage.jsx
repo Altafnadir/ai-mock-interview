@@ -8,6 +8,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
 import Logo from '../../components/common/Logo';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 
 export default function LoginPage() {
   const [loginMode, setLoginMode] = useState('password'); // 'password' | 'otp'
@@ -115,26 +116,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Top Right Theme Switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeSwitcher />
+      </div>
+
       <div className="max-w-md w-full">
         {/* Brand Header */}
         <div className="text-center mb-8 flex flex-col items-center">
           <Logo variant="full" size="lg" to="/" className="mb-2" />
-          <h2 className="text-xl font-bold text-white mt-2">Welcome Back</h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-2">Welcome Back</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Sign in to continue your mock interview preparation
           </p>
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="flex bg-slate-900 border border-slate-800 rounded-xl p-1 mb-4">
+        <div className="flex bg-slate-200/80 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl p-1 mb-4">
           <button
             type="button"
             onClick={() => { setLoginMode('password'); setError(''); }}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               loginMode === 'password'
                 ? 'bg-primary-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             Password Sign In
@@ -145,14 +151,14 @@ export default function LoginPage() {
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               loginMode === 'otp'
                 ? 'bg-primary-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             Passwordless OTP
           </button>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
               {error}
@@ -276,12 +282,12 @@ export default function LoginPage() {
           )}
 
           {/* Social / Google Sign-in */}
-          <div className="mt-5 pt-5 border-t border-slate-800">
+          <div className="mt-5 pt-5 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={handleGoogleLoginMock}
               disabled={isLoading}
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-sm"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700/80 text-slate-800 dark:text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-sm"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -305,16 +311,16 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="mt-6 pt-5 border-t border-slate-800 text-center text-xs text-slate-400">
+          <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
             Don't have an account?{' '}
-            <Link to="/register" className="text-primary-400 font-semibold hover:text-primary-300">
+            <Link to="/register" className="text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-500">
               Create account
             </Link>
           </div>
         </Card>
 
         <div className="text-center mt-6">
-          <Link to="/admin/login" className="text-xs text-slate-500 hover:text-slate-400">
+          <Link to="/admin/login" className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-400">
             Administrator Portal &rarr;
           </Link>
         </div>

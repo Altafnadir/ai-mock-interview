@@ -16,8 +16,16 @@ vi.mock('../store/authStore', () => ({
 }))
 
 vi.mock('../store/themeStore', () => ({
+  THEMES: {
+    SYSTEM: 'system',
+    WHITE: 'white',
+    BLACK: 'black',
+    BLUE: 'blue',
+  },
   useThemeStore: vi.fn(() => ({
     theme: 'dark',
+    resolvedTheme: 'black',
+    setTheme: vi.fn(),
     toggleTheme: vi.fn(),
   })),
 }))

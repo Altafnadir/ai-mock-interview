@@ -20,6 +20,7 @@ import { interviewApi } from '../../api/interview';
 import { toast } from '../../store/toastStore';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 import { bufferFailedAnswer, getBufferedAnswers, removeBufferedAnswer } from '../../utils/offlineStorage';
 
 export default function InterviewRoomPage() {
@@ -434,6 +435,7 @@ export default function InterviewRoomPage() {
 
         {/* Right utility buttons */}
         <div className="flex items-center gap-2">
+          <ThemeSwitcher size="sm" />
           <button
             onClick={() => setTtsEnabled(!ttsEnabled)}
             className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"

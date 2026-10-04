@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Logo from '../../components/common/Logo';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 
 export default function LandingPage() {
   const FEATURES = [
@@ -51,26 +52,27 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-primary-500/20 selection:text-primary-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-primary-500/20 selection:text-primary-300">
       {/* Top Banner */}
       <div className="bg-gradient-to-r from-primary-900/60 via-indigo-900/40 to-primary-900/60 border-b border-primary-500/20 py-2 px-4 text-center text-xs text-primary-200">
         <span className="font-semibold text-white">Final Year Project:</span> PMAS-Arid Agriculture University (GIMS) &bull; Project ID: <span className="font-mono font-bold text-amber-400">GIMS-BSSE-F202206</span>
       </div>
 
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Logo variant="full" size="md" to="/" responsive={true} />
           
-          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-300">
-            <a href="#features" className="hover:text-primary-400 transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-primary-400 transition-colors">How It Works</a>
-            <Link to="/resources" className="hover:text-primary-400 transition-colors">Resources</Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300">
+            <a href="#features" className="hover:text-primary-500 transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-primary-500 transition-colors">How It Works</a>
+            <Link to="/resources" className="hover:text-primary-500 transition-colors">Resources</Link>
           </nav>
 
           <div className="flex items-center gap-3">
+            <ThemeSwitcher />
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+              <Button variant="ghost" size="sm" className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
                 Sign In
               </Button>
             </Link>
@@ -95,14 +97,14 @@ export default function LandingPage() {
             Next-Gen Multimodal Mock Interview Platform
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight sm:leading-tight">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight sm:leading-tight text-slate-900 dark:text-white">
             Walk into your next interview with{' '}
-            <span className="bg-gradient-to-r from-primary-400 via-indigo-300 to-sky-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary-600 via-indigo-500 to-sky-500 dark:from-primary-400 dark:via-indigo-300 dark:to-sky-400 bg-clip-text text-transparent">
               genuine confidence
             </span>
           </h1>
 
-          <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Practice realistic questions tailored to your background, then get clear, supportive feedback on your answers, speaking rhythm, and presence — so you can shine when it counts.
           </p>
 
@@ -113,50 +115,50 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link to="/login">
-              <Button size="lg" variant="outline" className="border-slate-700 hover:bg-slate-900 text-slate-200">
+              <Button size="lg" variant="outline" className="border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200">
                 Sign In to Dashboard
               </Button>
             </Link>
             <Link to="/admin/login">
-              <Button size="lg" variant="ghost" className="text-slate-400 hover:text-amber-400" icon={Shield}>
+              <Button size="lg" variant="ghost" className="text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400" icon={Shield}>
                 Admin Portal
               </Button>
             </Link>
           </div>
 
           {/* Quick Metrics Bar */}
-          <div className="mt-16 pt-10 border-t border-slate-800/80 grid grid-cols-2 md:grid-cols-4 gap-6 text-center max-w-4xl mx-auto">
+          <div className="mt-16 pt-10 border-t border-slate-200/80 dark:border-slate-800/80 grid grid-cols-2 md:grid-cols-4 gap-6 text-center max-w-4xl mx-auto">
             <div>
-              <div className="text-3xl font-extrabold text-white">120+</div>
-              <div className="text-xs text-slate-400 mt-1 uppercase tracking-wide">Interview Questions</div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white">120+</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Interview Questions</div>
             </div>
             <div>
-              <div className="text-3xl font-extrabold text-white">11 Roles</div>
-              <div className="text-xs text-slate-400 mt-1 uppercase tracking-wide">Tech Job Tracks</div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white">11 Roles</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Tech Job Tracks</div>
             </div>
             <div>
-              <div className="text-3xl font-extrabold text-white">6 AI Layers</div>
-              <div className="text-xs text-slate-400 mt-1 uppercase tracking-wide">Speech, Vision, Content</div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white">6 AI Layers</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Speech, Vision, Content</div>
             </div>
             <div>
-              <div className="text-3xl font-extrabold text-white">Instant</div>
-              <div className="text-xs text-slate-400 mt-1 uppercase tracking-wide">PDF & Video Reports</div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white">Instant</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">PDF & Video Reports</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Feature Grid */}
-      <section className="py-20 bg-slate-900/50 border-y border-slate-800/80">
+      <section className="py-20 bg-slate-100/60 dark:bg-slate-900/50 border-y border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-xs font-semibold text-primary-400 uppercase tracking-widest mb-2">
+            <h2 className="text-xs font-semibold text-primary-500 dark:text-primary-400 uppercase tracking-widest mb-2">
               Advanced Evaluation Engine
             </h2>
-            <h3 className="text-3xl sm:text-4xl font-bold text-white">
+            <h3 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
               Every Dimension of Your Performance Analyzed
             </h3>
-            <p className="mt-4 text-slate-400 text-sm sm:text-base">
+            <p className="mt-4 text-slate-600 dark:text-slate-400 text-sm sm:text-base">
               Beyond simple text quizzes, our system assesses verbal, non-verbal, and technical competencies simultaneously.
             </p>
           </div>
@@ -167,13 +169,13 @@ export default function LandingPage() {
               return (
                 <div
                   key={i}
-                  className="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-primary-500/40 transition-all duration-200 group"
+                  className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary-500/40 shadow-sm transition-all duration-200 group"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-primary-950 border border-primary-800/60 flex items-center justify-center text-primary-400 group-hover:scale-105 transition-transform mb-5">
+                  <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-950 border border-primary-200 dark:border-primary-800/60 flex items-center justify-center text-primary-600 dark:text-primary-400 group-hover:scale-105 transition-transform mb-5">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <h4 className="text-lg font-bold text-white mb-2">{feature.title}</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed">{feature.desc}</p>
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{feature.title}</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{feature.desc}</p>
                 </div>
               );
             })}
@@ -183,42 +185,42 @@ export default function LandingPage() {
 
       {/* How it Works */}
       <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-xs font-semibold text-primary-400 uppercase tracking-widest mb-2">
+        <h2 className="text-xs font-semibold text-primary-500 dark:text-primary-400 uppercase tracking-widest mb-2">
           Simple 4-Step Process
         </h2>
-        <h3 className="text-3xl sm:text-4xl font-bold text-white mb-14">
+        <h3 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-14">
           How The System Works
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-left">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm text-left">
             <span className="text-4xl font-extrabold text-primary-500">01</span>
-            <h4 className="text-base font-bold text-white mt-4 mb-2">Upload Resume</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <h4 className="text-base font-bold text-slate-900 dark:text-white mt-4 mb-2">Upload Resume</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Upload your PDF/DOCX resume. The AI parses your technical skills, projects, and detects skill gaps.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-left">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm text-left">
             <span className="text-4xl font-extrabold text-primary-500">02</span>
             <h4 className="text-base font-bold text-white mt-4 mb-2">Configure Mock Session</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Select target role (Frontend, Backend, DevOps, ML), difficulty, category (Technical, HR, Behavioral), and test your webcam.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-left">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm text-left">
             <span className="text-4xl font-extrabold text-primary-500">03</span>
-            <h4 className="text-base font-bold text-white mt-4 mb-2">Live Interview Room</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <h4 className="text-base font-bold text-slate-900 dark:text-white mt-4 mb-2">Live Interview Room</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Answer simulated interview questions with countdown timers, speech-to-speech audio, and dynamic follow-up queries.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-left">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm text-left">
             <span className="text-4xl font-extrabold text-primary-500">04</span>
-            <h4 className="text-base font-bold text-white mt-4 mb-2">Instant Feedback & PDF</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <h4 className="text-base font-bold text-slate-900 dark:text-white mt-4 mb-2">Instant Feedback & PDF</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Review overall 0-100 scores, posture/emotion timelines, download official PDF reports, and watch recommended learning videos.
             </p>
           </div>
@@ -226,19 +228,19 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-10 bg-slate-950 text-slate-500 text-xs text-center">
+      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 py-10 bg-slate-50 dark:bg-slate-950 text-slate-500 text-xs text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 flex flex-col items-center">
           <Logo variant="full" size="sm" to="/" />
-          <p className="font-semibold text-slate-400">
+          <p className="font-semibold text-slate-600 dark:text-slate-400">
             Mock Interview AI &bull; AI-Based Mock Interview Preparation System (Project ID: GIMS-BSSE-F202206)
           </p>
           <p>
             Department of Software Engineering, PMAS-Arid Agriculture University (GIMS), Rawalpindi.
           </p>
-          <div className="pt-2 flex justify-center gap-6 text-slate-400">
-            <Link to="/login" className="hover:text-primary-400">Candidate Login</Link>
-            <Link to="/register" className="hover:text-primary-400">Register</Link>
-            <Link to="/admin/login" className="hover:text-amber-400">Admin Login</Link>
+          <div className="pt-2 flex justify-center gap-6 text-slate-500 dark:text-slate-400">
+            <Link to="/login" className="hover:text-primary-500">Candidate Login</Link>
+            <Link to="/register" className="hover:text-primary-500">Register</Link>
+            <Link to="/admin/login" className="hover:text-amber-500">Admin Login</Link>
           </div>
         </div>
       </footer>

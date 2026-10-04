@@ -7,6 +7,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
 import Logo from '../../components/common/Logo';
+import ThemeSwitcher from '../../components/common/ThemeSwitcher';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -53,17 +54,22 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Top Right Theme Switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeSwitcher />
+      </div>
+
       <div className="max-w-md w-full">
         <div className="text-center mb-8 flex flex-col items-center">
           <Logo variant="full" size="lg" to="/" className="mb-2" />
-          <h2 className="text-xl font-bold text-white mt-2">Create Candidate Account</h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-2">Create Candidate Account</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Join Mock Interview AI to start your personalized preparation
           </p>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900/90 shadow-2xl">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
@@ -126,9 +132,9 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-800 text-center text-xs text-slate-400">
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="text-primary-400 font-semibold hover:text-primary-300">
+            <Link to="/login" className="text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-500">
               Sign In
             </Link>
           </div>

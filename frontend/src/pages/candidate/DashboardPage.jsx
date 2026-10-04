@@ -27,6 +27,8 @@ import {
 } from 'recharts';
 import { dashboardApi } from '../../api/dashboard';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
+import { getChartTheme } from '../../utils/chartTheme';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -34,6 +36,9 @@ import Loader from '../../components/common/Loader';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const { theme, resolvedTheme } = useThemeStore();
+  const isDark = resolvedTheme === 'black' || resolvedTheme === 'blue';
+  const chartColors = getChartTheme(theme, isDark);
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -219,24 +224,24 @@ export default function DashboardPage() {
           <div className="h-64 w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={score_trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
-                <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} />
-                <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={11} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridStroke} opacity={0.5} />
+                <XAxis dataKey="date" stroke={chartColors.axisTickColor} fontSize={11} />
+                <YAxis domain={[0, 100]} stroke={chartColors.axisTickColor} fontSize={11} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#334155',
+                    backgroundColor: chartColors.tooltipBg,
+                    borderColor: chartColors.tooltipBorder,
                     borderRadius: '8px',
-                    color: '#f8fafc',
+                    color: chartColors.tooltipTextColor,
                     fontSize: '12px',
                   }}
                 />
                 <Line
                   type="monotone"
                   dataKey="score"
-                  stroke="#6366f1"
+                  stroke={chartColors.primaryLine}
                   strokeWidth={3}
-                  dot={{ fill: '#6366f1', strokeWidth: 2, r: 5 }}
+                  dot={{ fill: chartColors.primaryLine, strokeWidth: 2, r: 5 }}
                   activeDot={{ r: 7 }}
                 />
               </LineChart>
@@ -253,15 +258,15 @@ export default function DashboardPage() {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={competency_radar}>
-                <PolarGrid stroke="#334155" opacity={0.3} />
-                <PolarAngleAxis dataKey="subject" stroke="#94a3b8" fontSize={10} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#64748b" fontSize={9} />
+                <PolarGrid stroke={chartColors.gridStroke} opacity={0.5} />
+                <PolarAngleAxis dataKey="subject" stroke={chartColors.axisTickColor} fontSize={10} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke={chartColors.axisTickColor} fontSize={9} />
                 <Radar
                   name="Score"
                   dataKey="value"
-                  stroke="#4f46e5"
-                  fill="#6366f1"
-                  fillOpacity={0.3}
+                  stroke={chartColors.radarStroke}
+                  fill={chartColors.radarFill}
+                  fillOpacity={0.35}
                 />
               </RadarChart>
             </ResponsiveContainer>
