@@ -27,8 +27,8 @@ export default function SessionManagementPage() {
       setSessions([
         {
           id: 'sess-1',
-          candidate_name: 'Hamza Ali',
-          email: 'candidate@gims.edu.pk',
+          candidate_name: 'Altaf Nadir',
+          email: 'altafnadir33@gims.edu.pk',
           role_name: 'Frontend Developer',
           category_name: 'Technical',
           status: 'analyzed',
@@ -39,8 +39,8 @@ export default function SessionManagementPage() {
         },
         {
           id: 'sess-2',
-          candidate_name: 'Hamza Ali',
-          email: 'candidate@gims.edu.pk',
+          candidate_name: 'Hussnain',
+          email: 'hussnain33@gims.edu.pk',
           role_name: 'Full Stack Developer',
           category_name: 'Mixed',
           status: 'analyzed',

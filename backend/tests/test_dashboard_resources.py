@@ -10,16 +10,38 @@ from app.db.models.report import Report
 
 client = TestClient(app)
 
+def get_or_create_dash_user(db):
+    from app.core.security import get_password_hash
+    from app.scripts.seed_users import seed_sample_interview_data
+    test_email = "test_dash_candidate@gims.edu.pk"
+    user = db.query(User).filter(User.email == test_email).first()
+    if not user:
+        user = User(
+            email=test_email,
+            full_name="Dashboard Test Candidate",
+            password_hash=get_password_hash("TestPassword123!"),
+            role="candidate",
+            is_active=True,
+            is_email_verified=True,
+            auth_provider="local"
+        )
+        db.add(user)
+        db.flush()
+        seed_sample_interview_data(db, user)
+        db.commit()
+        db.refresh(user)
+    return user
+
 @pytest.fixture
 def auth_header():
+    from app.core.security import create_access_token
     db = SessionLocal()
-    user = db.query(User).filter(User.email == "candidate@gims.edu.pk").first()
-    db.close()
-    assert user is not None
-    res = client.post("/api/v1/auth/login", json={"email": "candidate@gims.edu.pk", "password": "CandidatePassword123!"})
-    assert res.status_code == 200
-    token = res.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    try:
+        user = get_or_create_dash_user(db)
+        token = create_access_token(user.id)
+        return {"Authorization": f"Bearer {token}"}
+    finally:
+        db.close()
 
 def test_candidate_dashboard(auth_header):
     res = client.get("/api/v1/dashboard/candidate", headers=auth_header)
@@ -108,7 +130,7 @@ def test_get_practice_drills(auth_header):
 
 def test_get_personalized_practice_drills(auth_header):
     db = SessionLocal()
-    user = db.query(User).filter(User.email == "candidate@gims.edu.pk").first()
+    user = db.query(User).filter(User.email == "test_dash_candidate@gims.edu.pk").first()
     assert user is not None
 
     role = db.query(JobRole).first()
@@ -201,8 +223,7 @@ def test_recommender_re_ranking():
     from app.ai.feedback_generator import feedback_generator
     db = SessionLocal()
     try:
-        user = db.query(User).filter(User.email == "candidate@gims.edu.pk").first()
-        assert user is not None
+        user = get_or_create_dash_user(db)
         session = db.query(InterviewSession).filter(InterviewSession.user_id == user.id).first()
         if not session:
             role = db.query(JobRole).first()

@@ -98,12 +98,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoCandidateFill = () => {
-    setLoginMode('password');
-    setEmail('candidate@gims.edu.pk');
-    setPassword('CandidatePassword123!');
-  };
-
   const handleGoogleLoginMock = async () => {
     setIsLoading(true);
     try {
@@ -173,7 +167,7 @@ export default function LoginPage() {
                 type="email"
                 icon={Mail}
                 required
-                placeholder="candidate@gims.edu.pk"
+                placeholder="student@gims.edu.pk"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -225,7 +219,7 @@ export default function LoginPage() {
                     type="email"
                     icon={Mail}
                     required
-                    placeholder="candidate@gims.edu.pk"
+                    placeholder="student@gims.edu.pk"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -308,18 +302,6 @@ export default function LoginPage() {
                 />
               </svg>
               Continue with Google
-            </button>
-          </div>
-
-          {/* Quick Demo Fill Shortcut */}
-          <div className="pt-3">
-            <button
-              type="button"
-              onClick={handleDemoCandidateFill}
-              className="w-full py-2 px-3 rounded-lg bg-primary-950/60 border border-primary-800/60 hover:bg-primary-900/40 text-primary-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              Fill Demo Candidate Credentials
             </button>
           </div>
 

@@ -835,5 +835,5 @@ Execution trace and verified record counts:
    - Seeded **30 curated educational guides and YouTube tutorials** tagged with the 8 canonical weakness tags (`eye_contact`, `communication`, `star_method`, `filler_words`, `technical`, `confidence`, `english_pronunciation`, `body_language`).
 5. **Feedback Templates (`seed_feedback_templates.py`):**
    - Seeded **16 dynamic feedback templates** covering diverse score bands from "Excellent" to "Needs Significant Practice".
-6. **Demo Candidate (`seed_demo.py`):**
-   - Seeded `candidate@gims.edu.pk` with pre-computed interview sessions, multi-modal metric records, and generated PDF reports for instant demonstration.
+6. **Candidate Accounts (`seed_users.py`):**
+   - Seeded candidate team accounts via local configuration (`seed_users.local.json`) with sample analyzed interview sessions and reports.

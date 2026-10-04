@@ -11,10 +11,23 @@ BASE_BACKEND = "http://localhost:8000"
 OUTPUT_DIR = Path(r"d:\ai-mock-interview\docs\screenshots\branding")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+def get_candidate_auth():
+    local_path = Path(r"d:\ai-mock-interview\backend\app\scripts\seed_users.local.json")
+    email, pwd = "altafnadir33@gims.edu.pk", ""
+    if local_path.exists():
+        import json
+        with open(local_path, "r", encoding="utf-8") as f:
+            users = json.load(f)
+            if users:
+                email = users[0]["email"]
+                pwd = users[0]["password"]
+    return email, pwd
+
 def create_sample_report_and_share():
+    email, pwd = get_candidate_auth()
     cand_resp = requests.post(f"{BASE_BACKEND}/api/v1/auth/login", json={
-        "email": "candidate@gims.edu.pk",
-        "password": "CandidatePassword123!"
+        "email": email,
+        "password": pwd
     })
     cand_token = cand_resp.json().get("access_token")
     headers = {"Authorization": f"Bearer {cand_token}"}
@@ -86,8 +99,9 @@ def main():
 
         # 5. Candidate Dashboard (via login submission)
         print("5. Capturing candidate_dashboard.png...")
-        page_auth.fill("input[type='email']", "candidate@gims.edu.pk")
-        page_auth.fill("input[type='password']", "CandidatePassword123!")
+        cand_email, cand_pwd = get_candidate_auth()
+        page_auth.fill("input[type='email']", cand_email)
+        page_auth.fill("input[type='password']", cand_pwd)
         page_auth.click("button[type='submit']")
         page_auth.wait_for_url("**/dashboard", timeout=10000)
         page_auth.wait_for_load_state("networkidle")

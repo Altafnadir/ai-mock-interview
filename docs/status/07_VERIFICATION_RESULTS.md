@@ -95,8 +95,8 @@ Questions seeded: Total in database: 128.
 Learning resources seeded: Total in database: 30.
 [5/6] Seeding Feedback Templates...
 Feedback templates seeded: Total in database: 16.
-[6/6] Seeding Demo Candidate Account with Sample Analyzed Sessions...
-Demo candidate (candidate@gims.edu.pk) verified.
+[6/6] Seeding Candidate Accounts & Sample Telemetry Data...
+Team candidate accounts processed and verified.
 ============================================================
 ALL SEED DATA INITIALIZED SUCCESSFULLY!
 ============================================================

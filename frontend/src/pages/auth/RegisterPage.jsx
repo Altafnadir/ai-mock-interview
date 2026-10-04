@@ -87,7 +87,7 @@ export default function RegisterPage() {
               type="email"
               icon={Mail}
               required
-              placeholder="candidate@gims.edu.pk"
+              placeholder="student@gims.edu.pk"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />

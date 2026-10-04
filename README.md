@@ -62,13 +62,19 @@ pip install -r backend/requirements.txt
 cp .env.example .env
 
 # Run database migrations and seed default data
-alembic upgrade head
-python -m app.scripts.seed_demo
-python -m app.scripts.seed_resources
+python -m app.scripts.seed
+python -m app.scripts.seed_users
 
 # Start the FastAPI backend
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+#### Team Candidate Accounts Seeding
+Candidate accounts are loaded via an uncommitted local JSON file for security:
+1. Copy `backend/app/scripts/seed_users.example.json` to `backend/app/scripts/seed_users.local.json`.
+2. Configure account credentials in `seed_users.local.json`.
+3. Run `python -m app.scripts.seed_users` manually or start the dev server (runs automatically on startup). Password handling is strictly isolated and never logged or committed.
+
 
 ### 2. Frontend Setup
 ```bash

@@ -29,7 +29,7 @@ export default function SecurityBackupPage() {
     } catch (err) {
       setLoginHistory([
         { id: '1', email: 'admin@gims.edu.pk', ip_address: '127.0.0.1', success: true, created_at: '2026-03-30 21:23:45' },
-        { id: '2', email: 'candidate@gims.edu.pk', ip_address: '127.0.0.1', success: true, created_at: '2026-03-30 21:20:12' },
+        { id: '2', email: 'altafnadir33@gims.edu.pk', ip_address: '127.0.0.1', success: true, created_at: '2026-03-30 21:20:12' },
         { id: '3', email: 'intruder@unknown.com', ip_address: '192.168.1.100', success: false, created_at: '2026-03-30 20:15:00' },
       ]);
     } finally {

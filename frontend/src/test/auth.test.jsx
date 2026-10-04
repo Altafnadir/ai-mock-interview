@@ -28,7 +28,7 @@ describe('LoginPage Component', () => {
     )
 
     expect(screen.getByText(/welcome back/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/candidate@gims\.edu\.pk/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/student@gims\.edu\.pk/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/••••••••/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument()
   })
@@ -50,7 +50,7 @@ describe('LoginPage Component', () => {
     authApi.login.mockResolvedValueOnce({
       data: {
         access_token: 'fake-jwt',
-        user: { id: 'u1', full_name: 'Test Student', email: 'candidate@gims.edu.pk', role: 'candidate' }
+        user: { id: 'u1', full_name: 'Test Student', email: 'student@gims.edu.pk', role: 'candidate' }
       }
     })
 
@@ -60,8 +60,8 @@ describe('LoginPage Component', () => {
       </BrowserRouter>
     )
 
-    fireEvent.change(screen.getByPlaceholderText(/candidate@gims\.edu\.pk/i), {
-      target: { value: 'candidate@gims.edu.pk' }
+    fireEvent.change(screen.getByPlaceholderText(/student@gims\.edu\.pk/i), {
+      target: { value: 'student@gims.edu.pk' }
     })
     fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
       target: { value: 'Secret123!' }
@@ -71,7 +71,7 @@ describe('LoginPage Component', () => {
 
     await waitFor(() => {
       expect(authApi.login).toHaveBeenCalledWith({
-        email: 'candidate@gims.edu.pk',
+        email: 'student@gims.edu.pk',
         password: 'Secret123!'
       })
     })

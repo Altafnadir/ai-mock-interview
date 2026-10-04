@@ -99,7 +99,7 @@ def upload_resume(
         entity="resume",
         entity_id=resume.id,
         user_id=current_user.id,
-        metadata_info={"filename": resume.filename, "file_size": resume.file_size}
+        metadata_info={"filename": resume.original_filename}
     )
 
     return resume

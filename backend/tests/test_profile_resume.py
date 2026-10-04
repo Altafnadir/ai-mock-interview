@@ -12,13 +12,33 @@ from app.db.models.user import User
 
 client = TestClient(app)
 
+from app.core.security import get_password_hash, create_access_token
+from app.db.models.user import CandidateProfile
+
 def get_candidate_token():
-    login_resp = client.post("/api/v1/auth/login", json={
-        "email": "candidate@gims.edu.pk",
-        "password": "CandidatePassword123!"
-    })
-    assert login_resp.status_code == 200, f"Candidate login failed: {login_resp.text}"
-    return login_resp.json()["access_token"]
+    test_email = "test_profile_candidate@gims.edu.pk"
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == test_email).first()
+        if not user:
+            user = User(
+                email=test_email,
+                full_name="Profile Test User",
+                password_hash=get_password_hash("TestPassword123!"),
+                role="candidate",
+                is_active=True,
+                is_email_verified=True,
+                auth_provider="local"
+            )
+            db.add(user)
+            db.flush()
+            profile = CandidateProfile(user_id=user.id, experience_level="beginner")
+            db.add(profile)
+            db.commit()
+            db.refresh(user)
+        return create_access_token(user.id)
+    finally:
+        db.close()
 
 def test_get_and_update_candidate_profile():
     token = get_candidate_token()
@@ -28,7 +48,7 @@ def test_get_and_update_candidate_profile():
     resp = client.get("/api/v1/profile", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
-    assert data["email"] == "candidate@gims.edu.pk"
+    assert data["email"] == "test_profile_candidate@gims.edu.pk"
     assert "profile" in data
 
     # 2. Update Profile

@@ -106,7 +106,24 @@ def test_passwordless_otp_login_flow():
         db.close()
 
 def test_forgot_and_reset_password_flow():
-    test_email = "candidate@gims.edu.pk"
+    test_email = "temp_auth_user@gims.edu.pk"
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == test_email).first()
+        if not user:
+            user = User(
+                email=test_email,
+                full_name="Temp Auth User",
+                password_hash="somehash",
+                role="candidate",
+                is_active=True,
+                is_email_verified=True,
+                auth_provider="local"
+            )
+            db.add(user)
+            db.commit()
+    finally:
+        db.close()
     
     # 1. Forgot password request
     fp_resp = client.post("/api/v1/auth/forgot-password", json={"email": test_email})

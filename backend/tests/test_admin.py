@@ -4,14 +4,13 @@ from app.main import app
 
 client = TestClient(app)
 
+from app.db.session import SessionLocal
+from app.db.models.user import User, CandidateProfile
+from app.core.security import get_password_hash, create_access_token
+
 ADMIN_CREDENTIALS = {
     "email": "admin@gims.edu.pk",
     "password": "AdminSecurePassword123!"
-}
-
-CANDIDATE_CREDENTIALS = {
-    "email": "candidate@gims.edu.pk",
-    "password": "CandidatePassword123!"
 }
 
 @pytest.fixture(scope="module")
@@ -23,10 +22,30 @@ def admin_headers():
 
 @pytest.fixture(scope="module")
 def candidate_headers():
-    res = client.post("/api/v1/auth/login", json=CANDIDATE_CREDENTIALS)
-    assert res.status_code == 200, f"Candidate login failed: {res.text}"
-    token = res.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    test_email = "test_admin_rbac_candidate@gims.edu.pk"
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == test_email).first()
+        if not user:
+            user = User(
+                email=test_email,
+                full_name="RBAC Test Candidate",
+                password_hash=get_password_hash("TestPassword123!"),
+                role="candidate",
+                is_active=True,
+                is_email_verified=True,
+                auth_provider="local"
+            )
+            db.add(user)
+            db.flush()
+            profile = CandidateProfile(user_id=user.id, experience_level="beginner")
+            db.add(profile)
+            db.commit()
+            db.refresh(user)
+        token = create_access_token(user.id)
+        return {"Authorization": f"Bearer {token}"}
+    finally:
+        db.close()
 
 def test_admin_rbac_forbidden_for_candidate(candidate_headers):
     # Candidate should be blocked from admin dashboard with 403 Forbidden
@@ -62,14 +81,15 @@ def test_admin_user_management(admin_headers):
     users = res.json()
     assert len(users) >= 2
 
-    candidate_user = next((u for u in users if u["email"] == "candidate@gims.edu.pk"), None)
+    candidate_user = next((u for u in users if u["role"] == "candidate"), None)
     assert candidate_user is not None
     user_id = candidate_user["id"]
+    target_email = candidate_user["email"]
 
     # Get single user
     res_single = client.get(f"/api/v1/admin/users/{user_id}", headers=admin_headers)
     assert res_single.status_code == 200
-    assert res_single.json()["email"] == "candidate@gims.edu.pk"
+    assert res_single.json()["email"] == target_email
 
     # Deactivate and activate user
     res_deact = client.put(f"/api/v1/admin/users/{user_id}/deactivate", headers=admin_headers)

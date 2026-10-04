@@ -9,13 +9,34 @@ from app.main import app
 
 client = TestClient(app)
 
+from app.db.session import SessionLocal
+from app.db.models.user import User, CandidateProfile
+from app.core.security import get_password_hash, create_access_token
+
 def get_candidate_token():
-    login_resp = client.post("/api/v1/auth/login", json={
-        "email": "candidate@gims.edu.pk",
-        "password": "CandidatePassword123!"
-    })
-    assert login_resp.status_code == 200
-    return login_resp.json()["access_token"]
+    test_email = "test_interview_candidate@gims.edu.pk"
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == test_email).first()
+        if not user:
+            user = User(
+                email=test_email,
+                full_name="Interview Test Candidate",
+                password_hash=get_password_hash("TestPassword123!"),
+                role="candidate",
+                is_active=True,
+                is_email_verified=True,
+                auth_provider="local"
+            )
+            db.add(user)
+            db.flush()
+            profile = CandidateProfile(user_id=user.id, experience_level="beginner")
+            db.add(profile)
+            db.commit()
+            db.refresh(user)
+        return create_access_token(user.id)
+    finally:
+        db.close()
 
 def test_meta_endpoints():
     # 1. Job Roles

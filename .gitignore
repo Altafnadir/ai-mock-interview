@@ -28,6 +28,10 @@ ENV/
 node_modules/
 dist/
 dist-ssr/
+# Local seeds and secrets
+backend/app/scripts/seed_users.local.json
+seed_users.local.json
+*.local.json
 *.local
 
 # Environment variables

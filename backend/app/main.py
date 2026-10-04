@@ -19,6 +19,11 @@ async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("Initializing database tables...")
     init_db()
+    try:
+        from app.scripts.seed_users import seed_users
+        seed_users()
+    except Exception as e:
+        logger.warning(f"Automatic seed_users skipped: {e}")
     start_scheduler()
     logger.info("Application startup complete.")
     yield

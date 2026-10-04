@@ -9,7 +9,7 @@ from app.scripts.seed_admin import seed_admin
 from app.scripts.seed_questions import seed_questions
 from app.scripts.seed_resources import seed_resources
 from app.scripts.seed_feedback_templates import seed_feedback_templates
-from app.scripts.seed_demo import seed_demo
+from app.scripts.seed_users import seed_users
 
 def run_all_seeds():
     print("=" * 60)
@@ -37,8 +37,8 @@ def run_all_seeds():
         print("\n[5/6] Seeding Feedback Templates...")
         seed_feedback_templates(db)
 
-        print("\n[6/6] Seeding Demo Candidate Account with Sample Analyzed Sessions...")
-        seed_demo(db)
+        print("\n[6/6] Seeding Candidate Accounts & Sample Telemetry Data...")
+        seed_users(db)
 
         print("\n" + "=" * 60)
         print("ALL SEED DATA INITIALIZED SUCCESSFULLY!")

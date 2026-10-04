@@ -43,8 +43,8 @@ export default function AdminDashboardPage() {
         recent_sessions: [
           {
             id: 's1',
-            candidate_name: 'Hamza Ali (Demo Candidate)',
-            email: 'candidate@gims.edu.pk',
+            candidate_name: 'Altaf Nadir',
+            email: 'altafnadir33@gims.edu.pk',
             role_name: 'Frontend Developer',
             overall_score: 88.5,
             verdict: 'Excellent',
@@ -52,8 +52,8 @@ export default function AdminDashboardPage() {
           },
           {
             id: 's2',
-            candidate_name: 'Hamza Ali (Demo Candidate)',
-            email: 'candidate@gims.edu.pk',
+            candidate_name: 'Hussnain',
+            email: 'hussnain33@gims.edu.pk',
             role_name: 'Full Stack Developer',
             overall_score: 76.2,
             verdict: 'Good',

@@ -36,8 +36,8 @@ export default function UserManagementPage() {
         },
         {
           id: 'u-candidate',
-          full_name: 'Hamza Ali (Demo Candidate)',
-          email: 'candidate@gims.edu.pk',
+          full_name: 'Altaf Nadir',
+          email: 'altafnadir33@gims.edu.pk',
           role: 'candidate',
           is_active: true,
           is_email_verified: true,

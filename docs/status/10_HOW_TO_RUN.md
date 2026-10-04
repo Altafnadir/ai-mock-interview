@@ -11,7 +11,7 @@
 | Role / Service | Default Email / URL | Default Password / Port | Notes |
 |:---|:---|:---|:---|
 | **System Admin** | `admin@gims.edu.pk` | `AdminSecurePassword123!` | Access to `/admin` dashboard |
-| **Demo Candidate** | `candidate@gims.edu.pk` | `CandidatePassword123!` | Pre-populated profile & sessions |
+| **Team Candidate** | Configured via `seed_users.local.json` | Configured locally (uncommitted) | Pre-populated profile & sessions |
 | **Frontend UI** | `http://localhost:5173` (dev) / `:80` (prod) | — | Vite / Nginx SPA |
 | **Backend REST API**| `http://localhost:8000/api/v1` | — | FastAPI |
 | **Interactive Docs**| `http://localhost:8000/docs` | — | Swagger UI |

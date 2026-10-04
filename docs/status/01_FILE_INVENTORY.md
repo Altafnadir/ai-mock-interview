@@ -84,11 +84,11 @@ ai-mock-interview/
 │   │   ├── scripts
 │   │   │   ├── seed.py
 │   │   │   ├── seed_admin.py
-│   │   │   ├── seed_demo.py
 │   │   │   ├── seed_feedback_templates.py
 │   │   │   ├── seed_meta.py
 │   │   │   ├── seed_questions.py
-│   │   │   └── seed_resources.py
+│   │   │   ├── seed_resources.py
+│   │   │   └── seed_users.py
 │   │   ├── services
 │   │   │   ├── email.py
 │   │   │   └── storage.py
@@ -399,7 +399,7 @@ ai-mock-interview/
 | `backend/app/schemas/resume.py` | Pydantic validation schemas and request/response DTOs for resume | 36 | **COMPLETE** |
 | `backend/app/scripts/seed.py` | Database seeding and data initialization script for seed | 54 | **COMPLETE** |
 | `backend/app/scripts/seed_admin.py` | Database seeding and data initialization script for seed_admin | 51 | **COMPLETE** |
-| `backend/app/scripts/seed_demo.py` | Database seeding and data initialization script for seed_demo | 392 | **COMPLETE** |
+| `backend/app/scripts/seed_users.py` | Database seeding and user initialization script for team candidate accounts | 385 | **COMPLETE** |
 | `backend/app/scripts/seed_feedback_templates.py` | Database seeding and data initialization script for seed_feedback_templates | 74 | **COMPLETE** |
 | `backend/app/scripts/seed_meta.py` | Database seeding and data initialization script for seed_meta | 124 | **COMPLETE** |
 | `backend/app/scripts/seed_questions.py` | Database seeding and data initialization script for seed_questions | 803 | **COMPLETE** |
