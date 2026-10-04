@@ -41,6 +41,17 @@ export default {
         slate: {
           850: '#151e2e',
           950: '#070d19',
+        },
+        navy: {
+          900: '#0B1437',
+          800: '#111C44',
+          700: '#1B254B',
+          600: '#2B3674',
+        },
+        surface: {
+          DEFAULT: '#F5F7FB',
+          card: '#FFFFFF',
+          border: '#E5E7EB',
         }
       },
       fontFamily: {

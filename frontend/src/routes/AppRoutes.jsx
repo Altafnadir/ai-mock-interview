@@ -18,6 +18,7 @@ import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 import AdminLoginPage from '../pages/auth/AdminLoginPage';
 import PublicSharedReport from '../pages/shared/PublicSharedReport';
+import DesignSystemPage from '../pages/dev/DesignSystemPage';
 
 // Candidate Pages
 import DashboardPage from '../pages/candidate/DashboardPage';
@@ -57,6 +58,7 @@ export default function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/shared/:token" element={<PublicSharedReport />} />
+      <Route path="/design-system" element={<DesignSystemPage />} />
 
       {/* Immersive Fullscreen Interview Room & Processing (Protected Candidate) */}
       <Route
