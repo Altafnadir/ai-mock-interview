@@ -32,6 +32,33 @@ class InterviewCreateRequest(BaseModel):
     num_questions: Optional[int] = None
     resume_id: Optional[str] = None
     mode: Optional[str] = "video"  # 'video' | 'audio' | 'text'
+    custom_questions: Optional[List[str]] = None
+
+class QuestionPreviewRequest(BaseModel):
+    role: Optional[str] = None
+    job_role_id: Optional[str] = None
+    level: Optional[str] = "2-5 Years"
+    type: Optional[str] = "Technical"
+    category_id: Optional[str] = None
+    difficulty: Optional[str] = "Medium"
+    difficulty_id: Optional[str] = None
+    count: int = Field(default=5, ge=1, le=15)
+    resume_id: Optional[str] = None
+
+class QuestionPreviewItem(BaseModel):
+    order_index: int
+    question_text: str
+    category: Optional[str] = None
+    difficulty: Optional[str] = None
+    time_limit_seconds: int = 120
+
+class QuestionPreviewResponse(BaseModel):
+    questions: List[QuestionPreviewItem]
+    count: int
+    role: str
+    level: str
+    type: str
+    difficulty: str
 
 class AnswerResponse(BaseModel):
     id: str

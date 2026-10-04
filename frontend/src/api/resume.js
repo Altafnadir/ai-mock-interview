@@ -12,7 +12,9 @@ export const resumeApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   deleteResume: (id) => apiClient.delete(`/resumes/${id}`),
-  analyzeResume: (id) => apiClient.post(`/resumes/${id}/analyze`),
+  analyzeResume: (id, payload) => apiClient.post(`/resumes/${id}/analyze`, payload),
+  reanalyzeResume: (id) => apiClient.post(`/resumes/${id}/reanalyze`),
   getResumeAnalysis: (id) => apiClient.get(`/resumes/${id}/analysis`),
+  getFullAnalysis: (id) => apiClient.get(`/resumes/${id}/analysis/full`),
 };
 

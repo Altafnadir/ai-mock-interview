@@ -18,11 +18,25 @@ class LearningResource(Base):
     # Tags: 'eye_contact' | 'communication' | 'star_method' | 'filler_words' | 'technical' | 'confidence' | 'english_pronunciation' | 'body_language' | 'grammar' | 'posture'
     job_role_id: Mapped[str] = mapped_column(String(36), ForeignKey("job_roles.id", ondelete="SET NULL"), nullable=True)
     difficulty: Mapped[str] = mapped_column(String(20), default="All", nullable=False)
+    level: Mapped[str] = mapped_column(String(20), default="Beginner", nullable=False)  # 'Beginner' | 'Intermediate' | 'Advanced'
+    thumbnail_url: Mapped[str] = mapped_column(String(500), nullable=True)
+    duration_seconds: Mapped[int] = mapped_column(Float, default=600, nullable=False)
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    view_count: Mapped[int] = mapped_column(Float, default=0, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     added_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     recommendations: Mapped[list["Recommendation"]] = relationship("Recommendation", back_populates="resource")
+
+
+class LearningProgress(Base):
+    __tablename__ = "learning_progress"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(36), ForeignKey("learning_resources.id", ondelete="CASCADE"), index=True, nullable=False)
+    watched_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class FeedbackTemplate(Base):

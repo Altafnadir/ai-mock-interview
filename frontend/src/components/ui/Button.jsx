@@ -7,12 +7,14 @@ export default function Button({
   className = '',
   disabled = false,
   loading = false,
+  isLoading = false,
   icon: Icon,
   iconPosition = 'left',
   onClick,
   type = 'button',
   ...props
 }) {
+  const isSpinning = loading || isLoading;
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
 
   const variants = {
@@ -33,12 +35,12 @@ export default function Button({
   return (
     <button
       type={type}
-      disabled={disabled || loading}
+      disabled={disabled || isSpinning}
       onClick={onClick}
       className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
       {...props}
     >
-      {loading ? (
+      {isSpinning ? (
         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -47,7 +49,7 @@ export default function Button({
         <Icon className="w-4 h-4 shrink-0" />
       ) : null}
       {children}
-      {!loading && Icon && iconPosition === 'right' ? (
+      {!isSpinning && Icon && iconPosition === 'right' ? (
         <Icon className="w-4 h-4 shrink-0" />
       ) : null}
     </button>

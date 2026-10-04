@@ -34,7 +34,23 @@ from app.db.models.report import (
 )
 from app.db.models.resource import (
     LearningResource,
+    LearningProgress,
     FeedbackTemplate,
+)
+from app.db.models.coach import (
+    CoachConversation,
+    CoachMessage,
+)
+from app.db.models.achievement import (
+    Badge,
+    UserBadge,
+    PointsLedger,
+)
+from app.db.models.goal import (
+    PracticeGoal,
+)
+from app.db.models.preference import (
+    NotificationPreference,
 )
 from app.db.models.system import (
     Notification,
@@ -71,7 +87,15 @@ __all__ = [
     "ReportShare",
     "Recommendation",
     "LearningResource",
+    "LearningProgress",
     "FeedbackTemplate",
+    "CoachConversation",
+    "CoachMessage",
+    "Badge",
+    "UserBadge",
+    "PointsLedger",
+    "PracticeGoal",
+    "NotificationPreference",
     "Notification",
     "ActivityLog",
     "SystemSetting",

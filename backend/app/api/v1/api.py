@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, profile, resumes, meta, interviews, reports, dashboard, resources, practice, notifications, admin
+from app.api.v1.endpoints import auth, profile, resumes, meta, interviews, reports, dashboard, resources, practice, notifications, admin, questions
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
@@ -7,6 +7,7 @@ api_router.include_router(profile.router, prefix="/profile", tags=["Profile"])
 api_router.include_router(resumes.router, prefix="/resumes", tags=["Resumes"])
 api_router.include_router(meta.router, prefix="/meta", tags=["Metadata"])
 api_router.include_router(interviews.router, prefix="/interviews", tags=["Interviews"])
+api_router.include_router(questions.router, prefix="/questions", tags=["Questions"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 api_router.include_router(resources.router, prefix="/resources", tags=["Learning Resources"])

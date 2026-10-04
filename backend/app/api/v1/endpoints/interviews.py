@@ -1,13 +1,14 @@
 import os
 from datetime import datetime
 from typing import List, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
 from app.db.session import get_db, SessionLocal
 from app.db.models.user import User
 from app.db.models.resume import Resume
+from app.db.models.report import Report
 from app.db.models.interview import (
     InterviewSession, SessionQuestion, Answer,
     JobRole, InterviewCategory, DifficultyLevel
@@ -62,8 +63,23 @@ def create_interview_session(
                 "extracted_experience": resume.analysis.extracted_experience,
             }
 
-    # Determine question count
-    q_count = payload.num_questions if (payload.num_questions and 1 <= payload.num_questions <= 15) else payload.total_questions
+    # Check if custom questions are provided
+    if payload.custom_questions and len(payload.custom_questions) > 0:
+        generated_questions = []
+        for idx, q_item in enumerate(payload.custom_questions):
+            q_text = q_item if isinstance(q_item, str) else str(q_item)
+            q_text = q_text.strip()
+            if q_text:
+                generated_questions.append({
+                    "order_index": len(generated_questions) + 1,
+                    "question_text": q_text,
+                    "source": "custom",
+                    "time_limit_seconds": 120
+                })
+        q_count = len(generated_questions)
+    else:
+        # Determine question count
+        q_count = payload.num_questions if (payload.num_questions and 1 <= payload.num_questions <= 15) else payload.total_questions
 
     # Create session
     session = InterviewSession(
@@ -78,15 +94,16 @@ def create_interview_session(
     db.add(session)
     db.flush()
 
-    # Generate questions
-    generated_questions = question_generator.generate_session_questions(
-        db=db,
-        job_role=job_role,
-        category=category,
-        difficulty=difficulty,
-        total_questions=q_count,
-        resume_context=resume_context
-    )
+    if not (payload.custom_questions and len(payload.custom_questions) > 0):
+        # Generate questions
+        generated_questions = question_generator.generate_session_questions(
+            db=db,
+            job_role=job_role,
+            category=category,
+            difficulty=difficulty,
+            total_questions=q_count,
+            resume_context=resume_context
+        )
 
     for q_data in generated_questions:
         sq = SessionQuestion(
@@ -103,15 +120,78 @@ def create_interview_session(
     db.refresh(session)
     return session
 
-@router.get("", response_model=List[InterviewSessionResponse])
-def get_user_interviews(
+@router.get("/summary")
+def get_interviews_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ) -> Any:
-    """Retrieve interview session history for the authenticated candidate."""
+    """Retrieve statistical summary of interviews: total, average score, best score, total practice time."""
     sessions = db.query(InterviewSession).filter(
         InterviewSession.user_id == current_user.id
-    ).order_by(InterviewSession.created_at.desc()).all()
+    ).all()
+    total_interviews = len(sessions)
+    session_ids = [s.id for s in sessions]
+    reports = db.query(Report).filter(Report.session_id.in_(session_ids)).all() if session_ids else []
+    scores = [r.overall_score for r in reports]
+    avg_score = round(sum(scores) / max(len(scores), 1), 1) if scores else 0.0
+    best_score = max(scores) if scores else 0.0
+
+    total_seconds = sum(s.duration_seconds for s in sessions)
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    formatted_time = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+    return {
+        "total_interviews": total_interviews,
+        "average_score": avg_score,
+        "best_score": best_score,
+        "total_practice_time": formatted_time or "0m",
+        "total_practice_time_seconds": total_seconds,
+        "total_practice_time_formatted": formatted_time or "0m"
+    }
+
+@router.get("", response_model=List[InterviewSessionResponse])
+def get_user_interviews(
+    type: Optional[str] = Query(None, description="Filter by interview category"),
+    role: Optional[str] = Query(None, description="Filter by job role"),
+    search: Optional[str] = Query(None, description="Search by role or category"),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query("date_desc"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Retrieve interview session history for the authenticated candidate with filters, search, and pagination."""
+    query = db.query(InterviewSession).filter(InterviewSession.user_id == current_user.id)
+
+    if role:
+        query = query.join(InterviewSession.job_role).filter(JobRole.name.ilike(f"%{role}%"))
+    if type:
+        query = query.join(InterviewSession.category).filter(InterviewCategory.name.ilike(f"%{type}%"))
+    if search:
+        query = query.join(InterviewSession.job_role).filter(JobRole.name.ilike(f"%{search}%"))
+    if date_from:
+        try:
+            d_from = datetime.fromisoformat(date_from)
+            query = query.filter(InterviewSession.created_at >= d_from)
+        except Exception:
+            pass
+    if date_to:
+        try:
+            d_to = datetime.fromisoformat(date_to)
+            query = query.filter(InterviewSession.created_at <= d_to)
+        except Exception:
+            pass
+
+    if sort_by == "date_asc":
+        query = query.order_by(InterviewSession.created_at.asc())
+    else:
+        query = query.order_by(InterviewSession.created_at.desc())
+
+    offset = (page - 1) * page_size
+    sessions = query.offset(offset).limit(page_size).all()
     return sessions
 
 @router.get("/{session_id}", response_model=InterviewSessionDetailResponse)

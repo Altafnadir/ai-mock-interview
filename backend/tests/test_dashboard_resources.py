@@ -254,3 +254,50 @@ def test_recommender_re_ranking():
     finally:
         db.close()
 
+
+def test_dashboard_v2_metrics_and_recommendation(auth_header):
+    res = client.get("/api/v1/dashboard/overview", headers=auth_header)
+    assert res.status_code == 200
+    data = res.json()
+    metrics = data["metrics"]
+    assert "confidence_score" in metrics
+    assert "communication_score" in metrics
+    assert "grammar_score" in metrics
+    assert "resume_score" in metrics
+    assert "confidence_label" in metrics
+    assert "communication_label" in metrics
+    assert "grammar_label" in metrics
+    assert "resume_label" in metrics
+    assert "interviews_delta_week" in metrics
+    assert "score_delta_week" in metrics
+    assert "next_goal" in metrics
+    assert "ai_recommendation" in data
+    assert "text" in data["ai_recommendation"]
+
+    # Test /dashboard/performance
+    perf_week = client.get("/api/v1/dashboard/performance?range=week", headers=auth_header)
+    assert perf_week.status_code == 200
+    assert "data" in perf_week.json()
+    assert perf_week.json()["range"] == "week"
+
+    perf_month = client.get("/api/v1/dashboard/performance?range=month", headers=auth_header)
+    assert perf_month.status_code == 200
+    assert "data" in perf_month.json()
+    assert perf_month.json()["range"] == "month"
+
+    # Test /dashboard/recommendation
+    rec_res = client.get("/api/v1/dashboard/recommendation", headers=auth_header)
+    assert rec_res.status_code == 200
+    rec_data = rec_res.json()
+    assert "text" in rec_data
+    assert "weak_area" in rec_data or "tag" in rec_data
+
+    # Test /interviews/summary
+    sum_res = client.get("/api/v1/interviews/summary", headers=auth_header)
+    assert sum_res.status_code == 200
+    sum_data = sum_res.json()
+    assert "total_interviews" in sum_data
+    assert "average_score" in sum_data
+    assert "best_score" in sum_data
+    assert "total_practice_time" in sum_data
+

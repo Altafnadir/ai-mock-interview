@@ -64,3 +64,12 @@ export function getScoreRating(score) {
     variant: 'danger',
   };
 }
+
+export function getScoreLabel(score) {
+  return getScoreRating(score).label;
+}
+
+export function getScoreBadgeVariant(score) {
+  return getScoreRating(score).variant;
+}
+

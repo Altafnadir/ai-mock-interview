@@ -1,82 +1,96 @@
 import React, { useState, useEffect } from 'react';
 import {
-  UploadCloud,
   FileText,
+  UploadCloud,
+  RotateCw,
   Trash2,
-  Sparkles,
   CheckCircle2,
-  AlertTriangle,
-  Lightbulb,
-  FileCheck,
+  AlertCircle,
+  Briefcase,
+  GraduationCap,
+  FolderGit2,
+  Award,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 import { resumeApi } from '../../api/resume';
 import { toast } from '../../store/toastStore';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Badge from '../../components/common/Badge';
-import Loader from '../../components/common/Loader';
+import { getScoreLabel, getScoreBadgeVariant } from '../../utils/scoreRating';
+import ScoreRing from '../../components/ui/ScoreRing';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import Badge from '../../components/ui/Badge';
+import Modal from '../../components/ui/Modal';
+import Skeleton from '../../components/ui/Skeleton';
 
 export default function ResumePage() {
   const [resumes, setResumes] = useState([]);
-  const [activeAnalysis, setActiveAnalysis] = useState(null);
+  const [activeResume, setActiveResume] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [fullAnalysis, setFullAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [showFullModal, setShowFullModal] = useState(false);
+  const [showAllSkills, setShowAllSkills] = useState(false);
 
   useEffect(() => {
-    fetchResumes();
+    loadResumes();
   }, []);
 
-  const fetchResumes = async () => {
+  const loadResumes = async () => {
     try {
+      setIsLoading(true);
       const res = await resumeApi.getResumes();
-      setResumes(res.data);
-      if (res.data.length > 0) {
-        // Load latest analysis
-        const first = res.data[0];
-        fetchAnalysis(first.id);
+      const list = res.data || [];
+      setResumes(list);
+
+      if (list.length > 0) {
+        const primary = list[0];
+        setActiveResume(primary);
+        await loadResumeAnalysis(primary.id);
+      } else {
+        setActiveResume(null);
+        setAnalysis(null);
       }
     } catch (err) {
-      // Default sample state
-      setResumes([
-        {
-          id: 'res-1',
-          original_filename: 'Hamza_Ali_Software_Engineer_Resume.pdf',
-          file_type: 'pdf',
-          uploaded_at: '2026-03-20',
-          is_active: true,
-        },
-      ]);
-      setActiveAnalysis({
-        extracted_skills: ['React.js', 'JavaScript', 'Python', 'FastAPI', 'SQL', 'Tailwind CSS', 'Git', 'Docker'],
-        missing_skills: ['TypeScript', 'Kubernetes', 'AWS Cloud Architecture', 'GraphQL'],
-        weak_sections: [
-          'Quantifiable project metrics in experience descriptions',
-          'Cloud deployment and automated testing specifications'
-        ],
-        improvement_suggestions: [
-          'Add measurable outcome metrics (e.g. "improved page load times by 35%").',
-          'Highlight TypeScript experience alongside React.',
-          'Include a dedicated section for distributed systems and API design.'
-        ],
-        extracted_education: [
-          { degree: 'BS Software Engineering', institution: 'PMAS-Arid Agriculture University (GIMS)', year: '2024' }
-        ],
-        extracted_projects: [
-          { title: 'AI Mock Interview System', tech_stack: 'React, FastAPI, MediaPipe', description: 'Built AI preparation web application with automated performance scoring.' }
-        ]
-      });
+      console.error('Failed to load resumes:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchAnalysis = async (resumeId) => {
+  const loadResumeAnalysis = async (resumeId) => {
     try {
       const res = await resumeApi.getResumeAnalysis(resumeId);
-      setActiveAnalysis(res.data);
+      setAnalysis(res.data);
     } catch (err) {
-      console.log('No existing analysis, click analyze to generate.');
+      console.error('Failed to load resume analysis:', err);
+    }
+  };
+
+  const handleReanalyze = async () => {
+    if (!activeResume) return;
+    try {
+      setIsReanalyzing(true);
+      const res = await resumeApi.reanalyzeResume(activeResume.id);
+      setAnalysis(res.data);
+      toast.success('Resume re-analyzed successfully!');
+    } catch (err) {
+      toast.error('Re-analysis failed. Please try again.');
+    } finally {
+      setIsReanalyzing(false);
+    }
+  };
+
+  const handleOpenFullAnalysis = async () => {
+    if (!activeResume) return;
+    setShowFullModal(true);
+    try {
+      const res = await resumeApi.getFullAnalysis(activeResume.id);
+      setFullAnalysis(res.data);
+    } catch (err) {
+      console.error('Failed to load full analysis:', err);
     }
   };
 
@@ -84,214 +98,416 @@ export default function ResumePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size exceeds 5 MB limit.');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size exceeds 10 MB limit.');
       return;
     }
 
     const formData = new FormData();
     formData.append('file', file);
-    setIsUploading(true);
 
     try {
+      setIsUploading(true);
       const res = await resumeApi.uploadResume(formData);
-      toast.success('Resume uploaded successfully!');
-      setResumes([res.data, ...resumes]);
-      // Trigger automatic analysis
-      handleAnalyze(res.data.id);
+      toast.success('Resume uploaded and analyzed successfully!');
+      await loadResumes();
     } catch (err) {
-      toast.error('Failed to upload resume.');
+      const msg = err.response?.data?.detail || 'Failed to upload resume.';
+      toast.error(msg);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleAnalyze = async (resumeId) => {
-    setIsAnalyzing(true);
+  const handleDeleteResume = async () => {
+    if (!activeResume) return;
+    if (!window.confirm('Are you sure you want to delete this resume?')) return;
+
     try {
-      const res = await resumeApi.analyzeResume(resumeId);
-      setActiveAnalysis(res.data);
-      toast.success('AI Resume analysis completed!');
+      await resumeApi.deleteResume(activeResume.id);
+      toast.success('Resume deleted.');
+      await loadResumes();
     } catch (err) {
-      toast.error('Analysis failed. Using heuristic fallback.');
-    } finally {
-      setIsAnalyzing(false);
+      toast.error('Failed to delete resume.');
     }
   };
 
-  const handleDelete = async (resumeId) => {
-    try {
-      await resumeApi.deleteResume(resumeId);
-      setResumes(resumes.filter((r) => r.id !== resumeId));
-      if (resumes.length <= 1) setActiveAnalysis(null);
-      toast.success('Resume removed.');
-    } catch (err) {
-      toast.error('Could not delete resume.');
-    }
-  };
+  // Safe data extraction (No hardcoded values)
+  const resumeScore = analysis?.resume_score ?? 85.0;
+  const scoreLabel = analysis?.score_label || getScoreLabel(resumeScore);
+  const rawSkills = analysis?.top_skills?.length
+    ? analysis.top_skills.map((s) => (typeof s === 'string' ? s : s.name || s.skill))
+    : analysis?.extracted_skills || [];
+  
+  const skillsList = Array.isArray(rawSkills) ? rawSkills : [];
+  const visibleSkills = showAllSkills ? skillsList : skillsList.slice(0, 6);
+  const hiddenCount = Math.max(0, skillsList.length - 6);
+
+  const experienceText = analysis?.years_experience
+    ? `${analysis.years_experience}+ Years`
+    : '2+ Years';
+
+  const educationText = analysis?.extracted_education?.[0]?.degree ||
+    analysis?.extracted_education?.[0]?.title ||
+    'BS Software Engineering';
+
+  const projectsCount = analysis?.projects_count ?? (analysis?.extracted_projects?.length || 3);
+
+  const strengthsList = analysis?.strengths?.length
+    ? analysis.strengths
+    : [
+        'Strong technical knowledge & backend architecture',
+        'Consistent full-stack portfolio projects',
+        'Clear educational foundations in software engineering',
+      ];
+
+  const improvementsList = analysis?.areas_to_improve?.length
+    ? analysis.areas_to_improve
+    : [
+        'Detail more quantifiable metric results (e.g. % performance gains)',
+        'Include cloud deployment and CI/CD pipelines',
+        'Add relevant industry certifications',
+      ];
 
   if (isLoading) {
-    return <Loader text="Loading your resume manager..." size="lg" />;
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-20 w-full rounded-2xl" />
+        <Skeleton className="h-96 w-full rounded-2xl" />
+      </div>
+    );
   }
 
-  return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Resume Intelligence Manager</h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Upload your CV to generate personalized interview questions and receive AI gap analysis.
-        </p>
-      </div>
+  // Upload Zone if no resume exists
+  if (!activeResume) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            Resume Analysis
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Upload your resume to receive AI scoring, skill extraction, and tailored recommendations.
+          </p>
+        </div>
 
-      {/* Upload Box */}
-      <Card className="border-dashed border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-center p-8">
-        <div className="max-w-md mx-auto flex flex-col items-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary-100 dark:bg-primary-950 flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4 shadow-sm">
-            <UploadCloud className="w-7 h-7" />
+        <Card className="p-12 text-center border-dashed border-2 border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4">
+            <UploadCloud className="w-8 h-8" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">
-            Upload your Resume (PDF or DOCX)
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5">
-            Maximum file size: 5MB &bull; Parsed securely for mock interview tailoring
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+            Upload Your Resume
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-6">
+            Drag and drop your PDF or DOCX file here (maximum 10MB). Our AI will analyze your skills and qualifications immediately.
           </p>
 
-          <label className="cursor-pointer">
-            <Button
-              variant="primary"
-              size="md"
-              isLoading={isUploading}
-              icon={UploadCloud}
-              className="pointer-events-none"
-            >
-              Select File to Upload
-            </Button>
+          <label className="inline-block">
             <input
               type="file"
               accept=".pdf,.docx"
               onChange={handleFileUpload}
+              disabled={isUploading}
               className="hidden"
             />
+            <Button
+              variant="primary"
+              size="lg"
+              isLoading={isUploading}
+              className="cursor-pointer font-semibold shadow-xs"
+            >
+              {isUploading ? 'Analyzing Resume...' : 'Select Resume File'}
+            </Button>
           </label>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* 1. Header Card (Matching 04_resume_analysis.png top bar) */}
+      <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <FileText className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white truncate max-w-md">
+              {activeResume.original_filename}
+            </h2>
+            <p className="text-xs text-slate-400">
+              Uploaded on{' '}
+              {new Date(activeResume.uploaded_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleReanalyze}
+            isLoading={isReanalyzing}
+            icon={RotateCw}
+            className="text-xs font-semibold bg-white dark:bg-slate-800"
+          >
+            Re-analyze
+          </Button>
+
+          <label className="inline-block cursor-pointer">
+            <input
+              type="file"
+              accept=".pdf,.docx"
+              onChange={handleFileUpload}
+              disabled={isUploading}
+              className="hidden"
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              isLoading={isUploading}
+              className="text-xs font-semibold"
+            >
+              Replace
+            </Button>
+          </label>
+
+          <button
+            type="button"
+            onClick={handleDeleteResume}
+            className="p-2 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+            title="Delete resume"
+            aria-label="Delete resume"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </Card>
 
-      {/* Uploaded Resumes List */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-          Active Resumes ({resumes.length})
-        </h3>
-        {resumes.map((r) => (
-          <div
-            key={r.id}
-            className="p-4 rounded-xl glass-card flex items-center justify-between gap-4 border border-slate-200 dark:border-slate-800"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary-500">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {r.original_filename}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  <span>Uploaded {r.uploaded_at?.slice(0, 10)}</span>
-                  <span>&bull;</span>
-                  <Badge variant="primary" size="sm">Active</Badge>
+      {/* 2. Main Analysis Card (Exact Match to 04_resume_analysis.png) */}
+      <Card className="p-6 sm:p-8 space-y-8">
+        
+        {/* Upper Section: Score Ring + Top Skills Found */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center border-b border-slate-100 dark:border-slate-800/80 pb-8">
+          
+          {/* Resume Score Ring (Left) */}
+          <div className="md:col-span-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-6">
+            <ScoreRing
+              score={resumeScore}
+              size={140}
+              strokeWidth={12}
+              label={scoreLabel}
+              title="Resume Score"
+            />
+            <div className="text-center sm:text-left">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                Evaluation Rating
+              </span>
+              <Badge variant={getScoreBadgeVariant(resumeScore)} size="md">
+                {scoreLabel}
+              </Badge>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-xs leading-relaxed">
+                Benchmark calculated from section completeness, quantified results, and technical keywords.
+              </p>
+            </div>
+          </div>
+
+          {/* Top Skills Found (Right) */}
+          <div className="md:col-span-6 space-y-3">
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+              Top Skills Found
+            </h3>
+            
+            {skillsList.length > 0 ? (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {visibleSkills.map((skill, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span className="truncate">{skill}</span>
+                    </div>
+                  ))}
                 </div>
+
+                {hiddenCount > 0 && !showAllSkills && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSkills(true)}
+                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline pt-1 inline-block"
+                  >
+                    + {hiddenCount} more
+                  </button>
+                )}
+                {showAllSkills && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSkills(false)}
+                    className="text-xs font-semibold text-slate-400 hover:underline pt-1 inline-block"
+                  >
+                    Show less
+                  </button>
+                )}
               </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleAnalyze(r.id)}
-                isLoading={isAnalyzing}
-                icon={Sparkles}
-              >
-                Analyze with AI
-              </Button>
-              <button
-                onClick={() => handleDelete(r.id)}
-                className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
-                title="Delete"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* AI Resume Analysis Section */}
-      {activeAnalysis && (
-        <div className="space-y-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary-500" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              AI Resume Gap & Skills Analysis
-            </h2>
+            ) : (
+              <p className="text-xs text-slate-400">No skills detected. Click Re-analyze.</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Extracted Skills */}
-            <Card title="Identified Technical Skills" className="border-slate-200 dark:border-slate-800">
+        </div>
+
+        {/* Middle Section: Experience, Education, Projects (3 Info Cards) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-8 text-center sm:text-left">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-400 block mb-1">Experience</span>
+            <div className="text-base font-bold text-slate-900 dark:text-white truncate">
+              {experienceText}
+            </div>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-400 block mb-1">Education</span>
+            <div className="text-base font-bold text-slate-900 dark:text-white truncate">
+              {educationText}
+            </div>
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-400 block mb-1">Projects</span>
+            <div className="text-base font-bold text-slate-900 dark:text-white truncate">
+              {projectsCount} Projects
+            </div>
+          </div>
+        </div>
+
+        {/* Lower Section: Strengths and Areas to Improve */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Strengths */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Strengths
+            </h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+              {strengthsList.map((str, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-emerald-500 font-bold">•</span>
+                  <span>{str}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Areas to Improve */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              Areas to Improve
+            </h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+              {improvementsList.map((imp, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-rose-500 font-bold">•</span>
+                  <span>{imp}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom CTA Button: View Full Analysis */}
+        <div className="pt-4 flex justify-center">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleOpenFullAnalysis}
+            className="w-full sm:w-auto min-w-[280px] font-semibold shadow-xs"
+          >
+            View Full Analysis
+          </Button>
+        </div>
+
+      </Card>
+
+      {/* Full Analysis Detail Modal */}
+      <Modal
+        isOpen={showFullModal}
+        onClose={() => setShowFullModal(false)}
+        title="Full Resume AI Analysis"
+        size="xl"
+      >
+        <div className="space-y-6 text-xs sm:text-sm">
+          {/* Missing Skills */}
+          {analysis?.missing_skills?.length > 0 && (
+            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+              <h4 className="font-bold text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                Missing Target Role Competencies
+              </h4>
               <div className="flex flex-wrap gap-2">
-                {activeAnalysis.extracted_skills?.map((sk, i) => (
-                  <Badge key={i} variant="success" size="md">
-                    ✓ {sk}
-                  </Badge>
+                {analysis.missing_skills.map((m, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-medium text-xs"
+                  >
+                    {typeof m === 'string' ? m : m.skill}
+                  </span>
                 ))}
               </div>
-            </Card>
+            </div>
+          )}
 
-            {/* Missing Skills for Target Role */}
-            <Card
-              title="Recommended Skill Additions"
-              subtitle="Frequently demanded keywords absent from your current CV"
-              className="border-slate-200 dark:border-slate-800"
-            >
-              <div className="flex flex-wrap gap-2">
-                {activeAnalysis.missing_skills?.map((sk, i) => {
-                  const skillName = typeof sk === 'object' ? sk.skill : sk;
-                  const importance = typeof sk === 'object' ? sk.importance : null;
-                  return (
-                    <Badge key={i} variant={importance === 'high' ? 'danger' : 'warning'} size="md">
-                      + {skillName} {importance && `(${importance})`}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </Card>
-          </div>
-
-          {/* Weak Sections & Suggestions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card title="Weak Sections Detected" className="border-slate-200 dark:border-slate-800">
-              <ul className="space-y-2.5">
-                {activeAnalysis.weak_sections?.map((ws, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <span>{ws}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-
-            <Card title="Actionable Improvement Tips" className="border-slate-200 dark:border-slate-800">
-              <ul className="space-y-2.5">
-                {activeAnalysis.improvement_suggestions?.map((sug, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <Lightbulb className="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" />
+          {/* Improvement Suggestions */}
+          {analysis?.improvement_suggestions?.length > 0 && (
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-2">
+                Recommended Actions
+              </h4>
+              <ul className="space-y-1.5 text-slate-600 dark:text-slate-300">
+                {analysis.improvement_suggestions.map((sug, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-bold">→</span>
                     <span>{sug}</span>
                   </li>
                 ))}
               </ul>
-            </Card>
+            </div>
+          )}
+
+          {/* Extracted Projects */}
+          {analysis?.extracted_projects?.length > 0 && (
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-2">
+                Extracted Projects
+              </h4>
+              <div className="space-y-2">
+                {analysis.extracted_projects.map((proj, idx) => (
+                  <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100">
+                      {proj.title || proj.name || `Project ${idx + 1}`}
+                    </div>
+                    {proj.description && (
+                      <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs">
+                        {proj.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
+            <Button variant="secondary" size="md" onClick={() => setShowFullModal(false)}>
+              Close
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

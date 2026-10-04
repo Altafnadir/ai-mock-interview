@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Lock, CheckCircle2 } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import { toast } from '../../store/toastStore';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
-import Card from '../../components/common/Card';
-import Logo from '../../components/common/Logo';
-import ThemeSwitcher from '../../components/common/ThemeSwitcher';
+import AuthSplitLayout from '../../components/layout/AuthSplitLayout';
+import Button from '../../components/ui/Button';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -52,70 +49,72 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      {/* Top Right Theme Switcher */}
-      <div className="absolute top-4 right-4 z-20">
-        <ThemeSwitcher />
-      </div>
+    <AuthSplitLayout
+      title="Create New Password 🔒"
+      subtitle="Enter a secure password to regain access to your account."
+    >
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+          Set New Password
+        </h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+          Your new password must be at least 8 characters long.
+        </p>
 
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8 flex flex-col items-center">
-          <Logo variant="full" size="md" to="/" className="mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create New Password</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            Enter your new secure password below
-          </p>
-        </div>
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-medium">
+            {error}
+          </div>
+        )}
 
-        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
-                {error}
-              </div>
-            )}
-
-            <Input
-              label="New Password"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              New Password
+            </label>
+            <input
               id="newPassword"
               type="password"
-              icon={Lock}
               required
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
+          </div>
 
-            <Input
-              label="Confirm New Password"
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Confirm New Password
+            </label>
+            <input
               id="confirmPassword"
               type="password"
-              icon={Lock}
               required
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full mt-2 font-semibold"
-              isLoading={isLoading}
-              icon={CheckCircle2}
-            >
-              Update Password
-            </Button>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
-            <Link to="/login" className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-              Cancel & Return to Sign In
-            </Link>
           </div>
-        </Card>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full font-semibold shadow-sm"
+            isLoading={isLoading}
+          >
+            Update Password
+          </Button>
+        </form>
+
+        <p className="mt-6 text-center text-xs text-slate-400">
+          <Link to="/login" className="hover:text-slate-600 dark:hover:text-slate-300">
+            &larr; Back to sign in
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }

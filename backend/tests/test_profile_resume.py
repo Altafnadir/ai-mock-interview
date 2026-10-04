@@ -149,6 +149,26 @@ def test_resume_upload_and_analysis_flow():
     # DevOps needs Linux, Kubernetes, Terraform etc. which should be identified
     assert "Linux" in missing_skills or "Kubernetes" in missing_skills or "Terraform" in missing_skills
 
+    # 4b. Test v2 /reanalyze endpoint
+    v2_re = client.post(f"/api/v1/resumes/{resume_id}/reanalyze", headers=headers)
+    assert v2_re.status_code == 200
+    assert "resume_score" in v2_re.json()
+
+    # 4c. Test v2 /analysis summary endpoint
+    sum_an = client.get(f"/api/v1/resumes/{resume_id}/analysis", headers=headers)
+    assert sum_an.status_code == 200
+    assert "resume_score" in sum_an.json()
+    assert "score_label" in sum_an.json()
+    assert "top_skills" in sum_an.json()
+
+    # 4d. Test v2 /analysis/full detail endpoint
+    full_an = client.get(f"/api/v1/resumes/{resume_id}/analysis/full", headers=headers)
+    assert full_an.status_code == 200
+    assert "strengths" in full_an.json()
+    assert "areas_to_improve" in full_an.json()
+    assert "extracted_skills" in full_an.json()
+    assert "extracted_education" in full_an.json()
+
     # 5. Delete Resume
     del_resp = client.delete(f"/api/v1/resumes/{resume_id}", headers=headers)
     assert del_resp.status_code == 200

@@ -28,9 +28,8 @@ describe('ResumePage Component', () => {
     render(<ResumePage />)
 
     await waitFor(() => {
-      expect(screen.getByText(/resume intelligence manager/i)).toBeInTheDocument()
-      expect(screen.getByText(/upload your resume \(pdf or docx\)/i)).toBeInTheDocument()
-      expect(screen.getByText(/maximum file size: 5mb/i)).toBeInTheDocument()
+      expect(screen.getByText(/resume analysis/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/upload your resume/i).length).toBeGreaterThan(0)
     })
   })
 

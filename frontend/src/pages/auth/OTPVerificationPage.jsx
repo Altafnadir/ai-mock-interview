@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { KeyRound, ArrowRight, RotateCw } from 'lucide-react';
+import { ShieldCheck, RotateCw } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
-import Button from '../../components/common/Button';
-import Card from '../../components/common/Card';
-import Logo from '../../components/common/Logo';
-import ThemeSwitcher from '../../components/common/ThemeSwitcher';
+import AuthSplitLayout from '../../components/layout/AuthSplitLayout';
+import Button from '../../components/ui/Button';
 
 export default function OTPVerificationPage() {
   const location = useLocation();
@@ -58,8 +56,8 @@ export default function OTPVerificationPage() {
     const pasted = e.clipboardData.getData('text').trim().slice(0, 6);
     if (/^\d+$/.test(pasted)) {
       const newDigits = [...digits];
-      for (let i = 0; i < pasted.length; i++) {
-        newDigits[i] = pasted[i];
+      for (let i = 0; i < 6; i++) {
+        newDigits[i] = pasted[i] || '';
       }
       setDigits(newDigits);
       if (inputRefs.current[Math.min(pasted.length, 5)]) {
@@ -68,28 +66,29 @@ export default function OTPVerificationPage() {
     }
   };
 
-  const handleVerify = async (e) => {
-    if (e) e.preventDefault();
-    setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     const code = digits.join('');
     if (code.length !== 6) {
-      setError('Please enter all 6 digits of your verification code.');
+      setError('Please enter all 6 digits of the verification code.');
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const res = await authApi.verifyOtp({
-        email,
-        code,
-        purpose: 'register',
-      });
+    if (!email) {
+      setError('Email address is required.');
+      return;
+    }
 
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await authApi.verifyOtp({ email, code });
       setAuth(res.data);
-      toast.success('Account verified successfully! Welcome to your dashboard.');
-      navigate('/dashboard');
+      toast.success('Account successfully verified! Welcome aboard.');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Verification failed. Please check the code.';
+      const msg = err.response?.data?.detail || 'Invalid or expired code.';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -101,91 +100,114 @@ export default function OTPVerificationPage() {
     if (countdown > 0 || resending) return;
     setResending(true);
     setError('');
+
     try {
-      const res = await authApi.resendOtp({ email, purpose: 'register' });
-      toast.success(res.data.message || 'Verification code resent.');
+      await authApi.resendOtp(email);
+      toast.success('A fresh verification code was sent to your email.');
       setCountdown(60);
+      setDigits(['', '', '', '', '', '']);
+      if (inputRefs.current[0]) inputRefs.current[0].focus();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to resend code.');
+      const msg = err.response?.data?.detail || 'Could not resend verification code.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setResending(false);
     }
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      {/* Top Right Theme Switcher */}
-      <div className="absolute top-4 right-4 z-20">
-        <ThemeSwitcher />
-      </div>
-
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8 flex flex-col items-center">
-          <Logo variant="full" size="md" to="/" className="mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Verify Your Email</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            Enter the 6-digit verification code dispatched to:
-          </p>
-          <div className="mt-1 font-semibold text-primary-600 dark:text-primary-400 text-sm">{email || 'your email'}</div>
+    <AuthSplitLayout
+      title="Verify Your Account ✉️"
+      subtitle="Enter the 6-digit verification code sent to your email address."
+    >
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm text-center">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-4">
+          <ShieldCheck className="w-6 h-6 stroke-[2.2]" />
         </div>
 
-        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
-          <form onSubmit={handleVerify} className="space-y-6">
-            {error && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium text-center">
-                {error}
-              </div>
-            )}
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+          Two-Step Verification
+        </h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+          We sent a 6-digit confirmation code to{' '}
+          <span className="font-semibold text-slate-700 dark:text-slate-200">{email || 'your email'}</span>
+        </p>
 
-            {/* 6 Digit Input Boxes */}
-            <div className="flex justify-between gap-2" onPaste={handlePaste}>
-              {digits.map((digit, idx) => (
-                <input
-                  key={idx}
-                  ref={(el) => (inputRefs.current[idx] = el)}
-                  type="text"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleDigitChange(idx, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(idx, e)}
-                  className="w-12 h-14 text-center text-xl font-bold rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
-                />
-              ))}
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full font-semibold shadow-md shadow-primary-600/30"
-              isLoading={isLoading}
-              icon={ArrowRight}
-            >
-              Verify & Enter Dashboard
-            </Button>
-          </form>
-
-          {/* Resend Section */}
-          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>Didn't receive the code?</span>
-            <button
-              type="button"
-              disabled={countdown > 0 || resending}
-              onClick={handleResend}
-              className="font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-500 disabled:opacity-50 flex items-center gap-1"
-            >
-              <RotateCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
-              {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
-            </button>
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-medium">
+            {error}
           </div>
-        </Card>
+        )}
 
-        <div className="text-center mt-6">
-          <Link to="/login" className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-400">
-            &larr; Back to Sign In
-          </Link>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {!email && (
+            <div className="text-left mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Verify Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              />
+            </div>
+          )}
+
+          {/* 6 Digit Inputs */}
+          <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+            {digits.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleDigitChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all shadow-xs"
+              />
+            ))}
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full font-semibold shadow-sm"
+            isLoading={isLoading}
+          >
+            Verify & Continue
+          </Button>
+        </form>
+
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span>Didn't receive the email?</span>
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={countdown > 0 || resending}
+            className={`font-semibold transition-colors flex items-center gap-1.5 ${
+              countdown > 0
+                ? 'text-slate-400 cursor-not-allowed'
+                : 'text-indigo-600 dark:text-indigo-400 hover:underline'
+            }`}
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
+            {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
+          </button>
         </div>
+
+        <p className="mt-6 text-center text-xs text-slate-400">
+          <Link to="/login" className="hover:text-slate-600 dark:hover:text-slate-300">
+            &larr; Back to sign in
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }

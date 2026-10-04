@@ -3,11 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, UserPlus } from 'lucide-react';
 import { authApi } from '../../api/auth';
 import { toast } from '../../store/toastStore';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
-import Card from '../../components/common/Card';
-import Logo from '../../components/common/Logo';
-import ThemeSwitcher from '../../components/common/ThemeSwitcher';
+import AuthSplitLayout from '../../components/layout/AuthSplitLayout';
+import Button from '../../components/ui/Button';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -54,92 +51,104 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      {/* Top Right Theme Switcher */}
-      <div className="absolute top-4 right-4 z-20">
-        <ThemeSwitcher />
-      </div>
+    <AuthSplitLayout
+      title="Start Your Journey 🚀"
+      subtitle="Create your free account to practice realistic AI mock interviews."
+    >
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+          Create Account
+        </h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+          Sign up to unlock resume scoring and live AI feedback
+        </p>
 
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8 flex flex-col items-center">
-          <Logo variant="full" size="lg" to="/" className="mb-2" />
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-2">Create Candidate Account</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Join Mock Interview AI to start your personalized preparation
-          </p>
-        </div>
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-medium">
+            {error}
+          </div>
+        )}
 
-        <Card className="border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
-                {error}
-              </div>
-            )}
-
-            <Input
-              label="Full Name"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Full Name
+            </label>
+            <input
               id="fullName"
-              icon={User}
+              type="text"
               required
-              placeholder="Hamza Ali"
+              placeholder="e.g. Hussnain Tariq"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
+          </div>
 
-            <Input
-              label="Email Address"
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Email Address
+            </label>
+            <input
               id="email"
               type="email"
-              icon={Mail}
               required
-              placeholder="student@gims.edu.pk"
+              placeholder="e.g. hussnain33@gims.edu.pk"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
+          </div>
 
-            <Input
-              label="Password (min 8 chars)"
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Password (min 8 chars)
+            </label>
+            <input
               id="password"
               type="password"
-              icon={Lock}
               required
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
+          </div>
 
-            <Input
-              label="Confirm Password"
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Confirm Password
+            </label>
+            <input
               id="confirmPassword"
               type="password"
-              icon={Lock}
               required
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full mt-2 font-semibold shadow-md shadow-primary-600/30"
-              isLoading={isLoading}
-              icon={UserPlus}
-            >
-              Register & Send OTP
-            </Button>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
-            Already have an account?{' '}
-            <Link to="/login" className="text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-500">
-              Sign In
-            </Link>
           </div>
-        </Card>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full font-semibold shadow-sm mt-2"
+            isLoading={isLoading}
+            icon={UserPlus}
+          >
+            Create Account
+          </Button>
+        </form>
+
+        <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+          Already have an account?{' '}
+          <Link to="/login" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }
